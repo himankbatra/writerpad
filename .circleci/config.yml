@@ -1,0 +1,16 @@
+version: 2 # use CircleCI 2.0 #
+jobs: # a collection of steps
+  build: # runs not using Workflows must have a `build` job as entry point
+  
+    docker: # run the steps with Docker
+      - image: circleci/openjdk:8-jdk-stretch # ...with this image as the primary container; this is where all `steps` will run
+
+    environment:
+      #CODECOV_TOKEN: c5accb88-5112-4811-8ac4-d3e7c00797e3
+
+    steps: # a collection of executable commands
+      - checkout
+      - run: ./mvnw clean install
+
+        #Codecov integration
+     # - run: bash <(curl -s https://codecov.io/bash)
