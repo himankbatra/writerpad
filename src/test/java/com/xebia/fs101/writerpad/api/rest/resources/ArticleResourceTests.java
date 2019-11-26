@@ -14,7 +14,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.mockito.Mockito.doThrow;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -92,5 +92,50 @@ public class ArticleResourceTests {
                 .andExpect(status().isInternalServerError());
     }
 
+
+/*    @Test
+    public void should_patch() throws Exception {
+
+
+        String json = "{\n" +
+                "  \"title\": \"How to learn Spring Boot\",\n" +
+                "  \"description\": \"Ever wonder how?\",\n" +
+                "  \"body\": \"You have to believe\",\n" +
+                "  \"tags\": [\"java\", \"Spring Boot\", \"tutorial\"],\n" +
+                "  \"featuredImageUrl\": \"url of the featured image\"\n" +
+                "}";
+
+
+        mockMvc.perform(post("/api/articles")
+                .accept(MediaType.APPLICATION_JSON)
+                .content(json)
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isCreated())
+                .andExpect(content().string(containsString("How to learn Spring Boot")));
+
+    json = "{\n" +
+                "    \"title\": \"How to learn Spring Boot by building an app\"\n" +
+                "}";
+
+        mockMvc.perform( patch( "how-to-learn-spring-boot-4c317b1e-8c51-4a32-8f99-9f4cdf90515d" )
+                .contentType( MediaType.APPLICATION_JSON_VALUE )
+                .content( json )
+        ).andExpect( status().isOk() );
+    }
+    @Test
+    public void should_find() throws Exception {
+        mockMvc.perform( get( "/api/articles/how-dns-works-aa2b1302-7e8d-43d0-9686-eddd712b495f" )
+        ).andExpect( status().isOk() );
+    }
+    @Test
+    public void should_delete() throws Exception {
+        mockMvc.perform( delete( "/api/articles/how-dns-works-aa2b1302-7e8d-43d0-9686-eddd712b495f" )
+        ).andExpect( status().isOk() );
+    }
+    @Test
+    public void should_get_all_articles() throws Exception {
+        mockMvc.perform( get( "/api/articles" )
+        ).andExpect( status().isOk() );
+    }*/
 
 }

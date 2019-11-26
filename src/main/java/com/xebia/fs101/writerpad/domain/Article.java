@@ -1,14 +1,22 @@
 package com.xebia.fs101.writerpad.domain;
 
+import com.xebia.fs101.writerpad.requests.ArticleRequest;
+import com.xebia.fs101.writerpad.utils.StringUtils;
+
 import javax.persistence.CollectionTable;
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+import javax.persistence.Transient;
 import java.util.Date;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -16,11 +24,12 @@ import java.util.UUID;
 @Table(name = "articles")
 public class Article {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
     private String title;
 
+    @Transient
     private String slug;
 
     @Column(length = 4000)
@@ -32,6 +41,9 @@ public class Article {
     @ElementCollection
     @CollectionTable(name = "tags", joinColumns = @JoinColumn(name = "id"))
     private Set<String> tags;
+
+    public Article() {
+    }
 
     @Override
     public String toString() {
@@ -52,23 +64,43 @@ public class Article {
 
     private String featuredImageUrl;
 
-    private Date createdAt;
+    @Column(updatable = false, nullable = false)
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date createdAt = new Date();
 
+    @Temporal(TemporalType.TIMESTAMP)
     private Date updatedAt;
 
     private boolean isFavorite = false;
 
     private int favoriteCount = 0;
 
+    public Article update(ArticleRequest articleRequest) {
+
+        if (Objects.nonNull(articleRequest.getTitle())) {
+            this.title = articleRequest.getTitle();
+        }
+        if (Objects.nonNull(articleRequest.getBody())) {
+            this.body = articleRequest.getBody();
+        }
+        if (Objects.nonNull(articleRequest.getDescription())) {
+            this.description = articleRequest.getDescription();
+        }
+        if (articleRequest.getTags().size() > 0) {
+            this.tags = articleRequest.getTags();
+        }
+
+        this.updatedAt = new Date();
+        return this;
+    }
+
     private Article(Builder builder) {
         id = builder.id;
         title = builder.title;
-        slug = builder.slug;
         body = builder.body;
         description = builder.description;
         tags = builder.tags;
         featuredImageUrl = builder.featuredImage;
-        createdAt = builder.createdAt;
         updatedAt = builder.updatedAt;
         isFavorite = builder.isFavorite;
         favoriteCount = builder.favoriteCount;
@@ -83,7 +115,9 @@ public class Article {
     }
 
     public String getSlug() {
-        return slug;
+        return Objects.nonNull(this.title) ? StringUtils.slugify(this.title)
+                : this.slug;
+
     }
 
     public String getBody() {
@@ -121,13 +155,11 @@ public class Article {
     public static final class Builder {
         private UUID id;
         private String title;
-        private String slug;
         private String body;
         private String description;
         private Set<String> tags;
         private String featuredImage;
         private String imageUrl;
-        private Date createdAt;
         private Date updatedAt;
         private boolean isFavorite;
         private int favoriteCount;
@@ -142,11 +174,6 @@ public class Article {
 
         public Builder withTitle(String val) {
             title = val;
-            return this;
-        }
-
-        public Builder withSlug(String val) {
-            slug = val;
             return this;
         }
 
@@ -175,10 +202,6 @@ public class Article {
             return this;
         }
 
-        public Builder withCreatedAt(Date val) {
-            createdAt = val;
-            return this;
-        }
 
         public Builder withUpdatedAt(Date val) {
             updatedAt = val;

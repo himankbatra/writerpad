@@ -1,11 +1,10 @@
 package com.xebia.fs101.writerpad.requests;
 
 import com.xebia.fs101.writerpad.domain.Article;
-import com.xebia.fs101.writerpad.utils.StringUtil;
+
 
 import javax.validation.constraints.NotBlank;
 import java.util.Collections;
-import java.util.Date;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -59,8 +58,6 @@ public class ArticleRequest {
                 .withTags(this.getTags().stream().map(String::toLowerCase)
                         .collect(Collectors.toSet()))
                 .withFeaturedImage(this.featuredImageUrl)
-                .withSlug(StringUtil.slug(this.title))
-                .withCreatedAt(new Date())
                 .build();
 
     }
