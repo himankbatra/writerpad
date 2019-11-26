@@ -29,6 +29,11 @@
         <property name="message" value="Space needed around ':' character."/>
     </module>
 
+    <module name="SuppressionFilter">
+        <property name="file" value="suppressions.xml"/>
+    </module>
+
+
     <module name="TreeWalker">
         <property name="cacheFile" value="${checkstyle.cache.file}"/>
 
@@ -143,7 +148,14 @@
         <!--module name="TodoComment"/-->
         <module name="UpperEll"/>
 
-        <!-- Make the @SuppressWarnings annotations available to Checkstyle -->
+
+
+
+        <!-- Make the @SuppressWarnings annotations
+         available to Checkstyle -->
         <module name="SuppressWarningsHolder"/>
+
+
+
     </module>
 </module>
