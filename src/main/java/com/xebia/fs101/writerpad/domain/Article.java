@@ -1,7 +1,8 @@
 package com.xebia.fs101.writerpad.domain;
 
-import com.xebia.fs101.writerpad.requests.ArticleRequest;
+
 import com.xebia.fs101.writerpad.utils.StringUtils;
+
 
 import javax.persistence.CollectionTable;
 import javax.persistence.Column;
@@ -42,25 +43,6 @@ public class Article {
     @CollectionTable(name = "tags", joinColumns = @JoinColumn(name = "id"))
     private Set<String> tags;
 
-    public Article() {
-    }
-
-    @Override
-    public String toString() {
-        return "Article{"
-                + "id=" + id
-                + ", title='" + title + '\''
-                + ", slug='" + slug + '\''
-                + ", body='" + body + '\''
-                + ", description='" + description + '\''
-                + ", tags=" + tags
-                + ", featuredImageUrl='" + featuredImageUrl + '\''
-                + ", createdAt=" + createdAt
-                + ", updatedAt=" + updatedAt
-                + ", isFavorite=" + isFavorite
-                + ", favoriteCount=" + favoriteCount
-                + '}';
-    }
 
     private String featuredImageUrl;
 
@@ -71,28 +53,32 @@ public class Article {
     @Temporal(TemporalType.TIMESTAMP)
     private Date updatedAt;
 
-    private boolean isFavorite = false;
+    private boolean favorited = false;
 
-    private int favoriteCount = 0;
+    private long favoritesCount = 0;
 
-    public Article update(ArticleRequest articleRequest) {
+    public Article update(Article copyFrom) {
 
-        if (Objects.nonNull(articleRequest.getTitle())) {
-            this.title = articleRequest.getTitle();
+        if (Objects.nonNull(copyFrom.getTitle())) {
+            this.title = copyFrom.getTitle();
         }
-        if (Objects.nonNull(articleRequest.getBody())) {
-            this.body = articleRequest.getBody();
+        if (Objects.nonNull(copyFrom.getBody())) {
+            this.body = copyFrom.getBody();
         }
-        if (Objects.nonNull(articleRequest.getDescription())) {
-            this.description = articleRequest.getDescription();
+        if (Objects.nonNull(copyFrom.getDescription())) {
+            this.description = copyFrom.getDescription();
         }
-        if (articleRequest.getTags().size() > 0) {
-            this.tags = articleRequest.getTags();
+        if (copyFrom.getTags().size() > 0) {
+            this.tags = copyFrom.getTags();
         }
 
         this.updatedAt = new Date();
         return this;
     }
+
+    public Article() {
+    }
+
 
     private Article(Builder builder) {
         id = builder.id;
@@ -100,10 +86,10 @@ public class Article {
         body = builder.body;
         description = builder.description;
         tags = builder.tags;
-        featuredImageUrl = builder.featuredImage;
+        featuredImageUrl = builder.featuredImageUrl;
         updatedAt = builder.updatedAt;
-        isFavorite = builder.isFavorite;
-        favoriteCount = builder.favoriteCount;
+        favorited = builder.favorited;
+        favoritesCount = builder.favoritesCount;
     }
 
     public UUID getId() {
@@ -144,12 +130,12 @@ public class Article {
         return updatedAt;
     }
 
-    public boolean isFavorite() {
-        return isFavorite;
+    public boolean isFavorited() {
+        return favorited;
     }
 
-    public int getFavoriteCount() {
-        return favoriteCount;
+    public long getFavoritesCount() {
+        return favoritesCount;
     }
 
     public static final class Builder {
@@ -158,11 +144,10 @@ public class Article {
         private String body;
         private String description;
         private Set<String> tags;
-        private String featuredImage;
-        private String imageUrl;
+        private String featuredImageUrl;
         private Date updatedAt;
-        private boolean isFavorite;
-        private int favoriteCount;
+        private boolean favorited;
+        private long favoritesCount;
 
         public Builder() {
         }
@@ -192,29 +177,24 @@ public class Article {
             return this;
         }
 
-        public Builder withFeaturedImage(String val) {
-            featuredImage = val;
-            return this;
-        }
-
-        public Builder withImageUrl(String val) {
-            imageUrl = val;
+        public Builder withFeaturedImageUrl(String val) {
+            featuredImageUrl = val;
             return this;
         }
 
 
-        public Builder withUpdatedAt(Date val) {
-            updatedAt = val;
+        public Builder withUpdatedAt() {
+            updatedAt = new Date();
             return this;
         }
 
-        public Builder withIsFavorite(boolean val) {
-            isFavorite = val;
+        public Builder withFavorited(boolean val) {
+            favorited = val;
             return this;
         }
 
-        public Builder withFavoriteCount(int val) {
-            favoriteCount = val;
+        public Builder withFavoritesCount(long val) {
+            favoritesCount = val;
             return this;
         }
 
@@ -222,4 +202,24 @@ public class Article {
             return new Article(this);
         }
     }
+
+
+
+    @Override
+    public String toString() {
+        return "Article{"
+                + "id=" + id
+                + ", title='" + title + '\''
+                + ", slug='" + slug + '\''
+                + ", body='" + body + '\''
+                + ", description='" + description + '\''
+                + ", tags=" + tags
+                + ", featuredImageUrl='" + featuredImageUrl + '\''
+                + ", createdAt=" + createdAt
+                + ", updatedAt=" + updatedAt
+                + ", isFavorite=" + favorited
+                + ", favoriteCount=" + favoritesCount
+                + '}';
+    }
+
 }

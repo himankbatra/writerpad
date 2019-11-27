@@ -1,13 +1,16 @@
-package com.xebia.fs101.writerpad.requests;
+package com.xebia.fs101.writerpad.api.rest.representations;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import com.xebia.fs101.writerpad.domain.Article;
-
+import com.xebia.fs101.writerpad.utils.StringUtils;
 
 import javax.validation.constraints.NotBlank;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@JsonDeserialize(builder = ArticleRequest.Builder.class)
 public class ArticleRequest {
     @NotBlank(message = "Please Provide Title")
     private String title;
@@ -41,28 +44,27 @@ public class ArticleRequest {
     }
 
     public Set<String> getTags() {
-        return tags == null ? Collections.emptySet() : tags;
+        return tags == null ? new HashSet<>() : tags;
     }
 
     public String getFeaturedImageUrl() {
         return featuredImageUrl;
     }
 
-    public ArticleRequest() {
-    }
 
     public Article toArticle() {
         return new Article.Builder().withTitle(this.title)
                 .withDescription(this.description)
                 .withBody(this.body)
-                .withTags(this.getTags().stream().map(String::toLowerCase)
+                .withTags(this.getTags().stream().map(StringUtils::slugify)
                         .collect(Collectors.toSet()))
-                .withFeaturedImage(this.featuredImageUrl)
+                .withFeaturedImageUrl(this.featuredImageUrl)
+                .withUpdatedAt()
                 .build();
 
     }
 
-
+    @JsonPOJOBuilder
     public static final class Builder {
         private String title;
         private String description;
@@ -93,7 +95,7 @@ public class ArticleRequest {
             return this;
         }
 
-        public Builder withFeaturedImage(String val) {
+        public Builder withFeaturedImageUrl(String val) {
             featuredImageUrl = val;
             return this;
         }

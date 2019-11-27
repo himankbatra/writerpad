@@ -1,7 +1,7 @@
 package com.xebia.fs101.writerpad.api.rest.resources;
 
+import com.xebia.fs101.writerpad.api.rest.representations.ArticleRequest;
 import com.xebia.fs101.writerpad.domain.Article;
-import com.xebia.fs101.writerpad.requests.ArticleRequest;
 import com.xebia.fs101.writerpad.service.ArticleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
@@ -17,8 +17,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
-
 import java.util.List;
+import java.util.Optional;
+
+import static com.xebia.fs101.writerpad.utils.StringUtils.toUuid;
 
 @RestController
 @RequestMapping(path = "/api/articles")
@@ -39,18 +41,21 @@ public class ArticleResource {
     }
 
 
-    @PatchMapping(path = "/{slug_uuid}")
+    @PatchMapping(path = "/{slug_id}")
     public ResponseEntity<Article> update(@RequestBody ArticleRequest articleRequest,
-                                          @PathVariable("slug_uuid") final String slugUuid) {
-        Article updatedArticle = this.articleService.update(articleRequest, slugUuid);
-        return new ResponseEntity<>(updatedArticle, HttpStatus.OK);
+                                          @PathVariable("slug_id") final String slugid) {
+        Optional<Article> optionalUpdatedArticle =
+                this.articleService.update(articleRequest.toArticle(), slugid);
+        return optionalUpdatedArticle.map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
 
-    @GetMapping(path = "/{slug_uuid}")
-    public ResponseEntity<Article> get(@PathVariable("slug_uuid") final String slugUuid) {
-        Article foundArticle = this.articleService.findById(this.articleService.toUuid(slugUuid));
-        return new ResponseEntity<>(foundArticle, HttpStatus.OK);
+    @GetMapping(path = "/{slug_id}")
+    public ResponseEntity<Article> get(@PathVariable("slug_id") final String slugid) {
+        Optional<Article> optionalFoundArticle = this.articleService.findById(toUuid(slugid));
+        return optionalFoundArticle.map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping
@@ -59,10 +64,11 @@ public class ArticleResource {
         return new ResponseEntity<>(foundArticle, HttpStatus.OK);
     }
 
-    @DeleteMapping(path = "/{slug_uuid}")
-    public ResponseEntity<Void> delete(@PathVariable("slug_uuid") final String slugUuid) {
-        this.articleService.delete(slugUuid);
-        return ResponseEntity.status(HttpStatus.OK).build();
+    @DeleteMapping(path = "/{slug_id}")
+    public ResponseEntity<Void> delete(@PathVariable("slug_id") final String slugid) {
+        return this.articleService.delete(slugid)
+                ? ResponseEntity.status(HttpStatus.NO_CONTENT).build()
+                : ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
 
 }
