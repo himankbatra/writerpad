@@ -1,4 +1,4 @@
-package com.xebia.fs101.writerpad.service;
+package com.xebia.fs101.writerpad.services;
 
 
 import com.xebia.fs101.writerpad.domain.Article;
@@ -28,7 +28,7 @@ public class ArticleService {
         return this.articleRepository.findById(uuid);
     }
 
-    public Optional<Article> update(Article copyFrom, String slugId) {
+    public Optional<Article> update(String slugId, Article copyFrom) {
         Optional<Article> optionalArticle = this.findById(toUuid(slugId));
         return optionalArticle
                 .map(article -> this.articleRepository.save(article.update(copyFrom)));

@@ -3,7 +3,6 @@ package com.xebia.fs101.writerpad.domain;
 
 import com.xebia.fs101.writerpad.utils.StringUtils;
 
-
 import javax.persistence.CollectionTable;
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
@@ -12,11 +11,13 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import javax.persistence.Transient;
 import java.util.Date;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -57,6 +58,10 @@ public class Article {
 
     private long favoritesCount = 0;
 
+
+    @OneToMany(mappedBy = "article")
+    private List<Comment> comments;
+
     public Article update(Article copyFrom) {
 
         if (Objects.nonNull(copyFrom.getTitle())) {
@@ -76,12 +81,12 @@ public class Article {
         return this;
     }
 
+
+
     public Article() {
     }
 
-
     private Article(Builder builder) {
-        id = builder.id;
         title = builder.title;
         body = builder.body;
         description = builder.description;
@@ -138,8 +143,8 @@ public class Article {
         return favoritesCount;
     }
 
+
     public static final class Builder {
-        private UUID id;
         private String title;
         private String body;
         private String description;
@@ -152,10 +157,6 @@ public class Article {
         public Builder() {
         }
 
-        public Builder withId(UUID val) {
-            id = val;
-            return this;
-        }
 
         public Builder withTitle(String val) {
             title = val;
@@ -202,7 +203,6 @@ public class Article {
             return new Article(this);
         }
     }
-
 
 
     @Override

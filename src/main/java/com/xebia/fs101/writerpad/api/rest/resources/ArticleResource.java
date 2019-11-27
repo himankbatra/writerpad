@@ -2,7 +2,7 @@ package com.xebia.fs101.writerpad.api.rest.resources;
 
 import com.xebia.fs101.writerpad.api.rest.representations.ArticleRequest;
 import com.xebia.fs101.writerpad.domain.Article;
-import com.xebia.fs101.writerpad.service.ArticleService;
+import com.xebia.fs101.writerpad.services.ArticleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -43,17 +43,17 @@ public class ArticleResource {
 
     @PatchMapping(path = "/{slug_id}")
     public ResponseEntity<Article> update(@RequestBody ArticleRequest articleRequest,
-                                          @PathVariable("slug_id") final String slugid) {
+                                          @PathVariable("slug_id") final String slugId) {
         Optional<Article> optionalUpdatedArticle =
-                this.articleService.update(articleRequest.toArticle(), slugid);
+                this.articleService.update(slugId, articleRequest.toArticle());
         return optionalUpdatedArticle.map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
 
     @GetMapping(path = "/{slug_id}")
-    public ResponseEntity<Article> get(@PathVariable("slug_id") final String slugid) {
-        Optional<Article> optionalFoundArticle = this.articleService.findById(toUuid(slugid));
+    public ResponseEntity<Article> get(@PathVariable("slug_id") final String slugId) {
+        Optional<Article> optionalFoundArticle = this.articleService.findById(toUuid(slugId));
         return optionalFoundArticle.map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -65,8 +65,8 @@ public class ArticleResource {
     }
 
     @DeleteMapping(path = "/{slug_id}")
-    public ResponseEntity<Void> delete(@PathVariable("slug_id") final String slugid) {
-        return this.articleService.delete(slugid)
+    public ResponseEntity<Void> delete(@PathVariable("slug_id") final String slugId) {
+        return this.articleService.delete(slugId)
                 ? ResponseEntity.status(HttpStatus.NO_CONTENT).build()
                 : ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }

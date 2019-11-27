@@ -2,6 +2,7 @@ package com.xebia.fs101.writerpad.service;
 
 import com.xebia.fs101.writerpad.domain.Article;
 import com.xebia.fs101.writerpad.api.rest.representations.ArticleRequest;
+import com.xebia.fs101.writerpad.services.ArticleService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
