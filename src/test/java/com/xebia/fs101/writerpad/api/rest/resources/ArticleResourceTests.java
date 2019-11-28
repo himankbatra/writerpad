@@ -6,6 +6,7 @@ import com.xebia.fs101.writerpad.api.rest.representations.ArticleRequest;
 import com.xebia.fs101.writerpad.domain.Article;
 import com.xebia.fs101.writerpad.repositories.ArticleRepository;
 import com.xebia.fs101.writerpad.services.ArticleService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,8 +15,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.transaction.annotation.Transactional;
-
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -30,10 +29,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@Transactional
 @SpringBootTest
 @AutoConfigureMockMvc
 public class ArticleResourceTests {
+
 
     @SpyBean
     private ArticleService articleService;
@@ -47,31 +46,20 @@ public class ArticleResourceTests {
     @Autowired
     private ArticleRepository articleRepository;
 
+
+    @AfterEach
+    void tearDown() {
+        this.articleRepository.deleteAll();
+    }
+
     @Test
     public void mock_mvc_should_not_be_null() {
         assertThat(mockMvc).isNotNull();
     }
 
+
     @Test
     void should_create_article_when_mandatory_request_data_is_provided() throws Exception {
-/*
-        String json = "{\n" +
-                "  \"title\": \"How to learn Spring Boot\",\n" +
-                "  \"description\": \"Ever wonder how?\",\n" +
-                "  \"body\": \"You have to believe\",\n" +
-                "  \"tags\": [\"java\", \"Spring Boot\", \"tutorial\"],\n" +
-                "  \"featuredImageUrl\": \"url of the featured image\"\n" +
-                "}";
-
-   mockMvc.perform(post("/api/articles")
-                .accept(MediaType.APPLICATION_JSON)
-                .content(json)
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isCreated())
-                .andExpect(content().string(containsString("How to learn Spring Boot")));
-*/
-
-
         ArticleRequest articleRequest = new ArticleRequest.Builder()
                 .withTitle("How to learn Spring Boot")
                 .withBody("You have to believe")
@@ -97,20 +85,6 @@ public class ArticleResourceTests {
                 .andExpect(jsonPath("$.favoritesCount").value(0));
     }
 
-   /* @Test
-    void when_i_pass_article_request_title_blank_should_give_status_bad_request() throws Exception {
-        String json = "{\n" +
-                "  \"title\": ,\n" +
-                "  \"description\": \"Ever wonder how?\",\n" +
-                "  \"body\": \"You have to believe\",\n" +
-                "  \"tags\": [\"java\", \"Spring Boot\", \"tutorial\"],\n" +
-                "  \"featuredImageUrl\": \"url of the featured image\"\n" +
-                "}";
-        mockMvc.perform(post("/api/articles")
-                .content(json)
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest());
-    }*/
 
     @Test
     void should_create_article_when_mandatory_and_optional_request_data_is_provided() throws Exception {
@@ -165,10 +139,6 @@ public class ArticleResourceTests {
     @Test
     void when_i_pass_article_request_without_title_should_give_status_internal_server_error() throws Exception {
 
-/*
-        when(articleService.save(ArgumentMatchers.any())).thenThrow(new RuntimeException());
-*/
-
         doThrow(new RuntimeException()).when(articleService).save(ArgumentMatchers.any());
 
         String json = "{\n" +
@@ -189,44 +159,6 @@ public class ArticleResourceTests {
     @Test
     public void should_update_article() throws Exception {
 
-      /*  ArticleRequest articleRequest = new ArticleRequest.Builder()
-                .withTitle("How to learn Spring Boot")
-                .withBody("You have to believe")
-                .withDescription("Ever wonder how?")
-                .build();
-
-        String json = objectMapper.writeValueAsString(articleRequest);
-        *//*String json = "{\n" +
-                "  \"title\": \"How to learn Spring Boot\",\n" +
-                "  \"description\": \"Ever wonder how?\",\n" +
-                "  \"body\": \"You have to believe\",\n" +
-                "  \"tags\": [\"java\", \"Spring Boot\", \"tutorial\"],\n" +
-                "  \"featuredImageUrl\": \"url of the featured image\"\n" +
-                "}";*//*
-
-
-        ResultActions resultActions = mockMvc.perform(post("/api/articles")
-                .accept(MediaType.APPLICATION_JSON)
-                .content(json)
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isCreated())
-                .andExpect(content().string(containsString("How to learn Spring Boot")));
-
-
-
-        MvcResult result = resultActions.andReturn();
-        String contentAsString = result.getResponse().getContentAsString();
-        Article article = objectMapper.readValue(contentAsString,Article.class);
-        String uuid= article.getSlug()+"-"+article.getId();
-       // String uuid=contentAsString.substring(7,43);
-        json = "{\n" +
-                "    \"title\": \"How to learn Spring Boot by building an app\"\n" +
-                "}";
-        String uri="/api/articles/how-to-learn-spring-boot-"+uuid;
-        mockMvc.perform( patch( uri )
-                .contentType( MediaType.APPLICATION_JSON_VALUE )
-                .content( json )
-        ).andExpect( status().isOk() );*/
 
         Article article = new Article.Builder()
                 .withBody("spring boot")

@@ -47,10 +47,6 @@ public class ArticleService {
             return true;
         }
         return false;
-/*        return optionalArticle.map(article -> {
-            this.articleRepository.deleteById(article.getId());
-            return true;
-        }).orElse(false);*/
 
     }
 }

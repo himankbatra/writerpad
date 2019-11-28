@@ -25,6 +25,7 @@ import java.util.UUID;
 @Entity
 @Table(name = "articles")
 public class Article {
+
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
@@ -80,8 +81,6 @@ public class Article {
         this.updatedAt = new Date();
         return this;
     }
-
-
 
     public Article() {
     }

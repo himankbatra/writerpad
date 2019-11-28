@@ -1,5 +1,7 @@
 package com.xebia.fs101.writerpad.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -30,8 +32,10 @@ public class Comment {
 
     private String ipAddress;
 
+    @JsonIgnore
     @ManyToOne
     private Article article;
+
 
     public Comment(String body, String ipAddress, Article article) {
         this.body = body;
@@ -63,7 +67,7 @@ public class Comment {
         return ipAddress;
     }
 
-/*    public Article getArticle() {
+    public Article getArticle() {
         return article;
-    }*/
+    }
 }

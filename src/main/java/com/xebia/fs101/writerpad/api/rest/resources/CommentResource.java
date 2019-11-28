@@ -72,9 +72,9 @@ public class CommentResource {
                                        @PathVariable("slug_id") final String slugId) {
         Optional<Article> optionalArticle = this.articleService.findById(toUuid(slugId));
         if (optionalArticle.isPresent()) {
-        return this.commentService.delete(id)
-                ? ResponseEntity.status(HttpStatus.NO_CONTENT).build()
-                : ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            return this.commentService.delete(id)
+                    ? ResponseEntity.status(HttpStatus.NO_CONTENT).build()
+                    : ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
         return ResponseEntity.notFound().build();
     }
