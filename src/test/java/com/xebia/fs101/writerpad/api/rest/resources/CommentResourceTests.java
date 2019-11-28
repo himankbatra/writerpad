@@ -2,6 +2,7 @@ package com.xebia.fs101.writerpad.api.rest.resources;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.xebia.fs101.writerpad.api.rest.representations.ArticleRequest;
 import com.xebia.fs101.writerpad.api.rest.representations.CommentRequest;
 import com.xebia.fs101.writerpad.domain.Article;
 import com.xebia.fs101.writerpad.domain.Comment;
@@ -26,7 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-public class CommentResourceTests {
+ class CommentResourceTests {
 
     @Autowired
     private MockMvc mockMvc;
@@ -96,6 +97,25 @@ public class CommentResourceTests {
                 .andExpect(status().isBadRequest());
     }
 
+
+    @Test
+    void should_get_400_and_not_post_a_comment_if_spam_word_exist_in_content() throws Exception {
+        ArticleRequest articleRequest = new ArticleRequest.Builder()
+                .withBody(" body")
+                .withTitle("title")
+                .withDescription("description")
+                .build();
+        System.out.println(articleRequest.toArticle());
+        Article savedArticle = articleRepository.save(articleRequest.toArticle());
+        String slugId = String.format("%s_%s", savedArticle.getSlug(), savedArticle.getId());
+        CommentRequest commentRequest=new CommentRequest("semen");
+        String json=objectMapper.writeValueAsString(commentRequest);
+        mockMvc.perform(post("/api/articles/{slug_id}/comments",slugId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+    }
 
     @Test
     void should_list_all_comments_when_valid_article_id_given() throws Exception {

@@ -19,7 +19,7 @@ public class Comment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+    private long id;
 
     @Column(updatable = false, nullable = false)
     @Temporal(TemporalType.TIMESTAMP)
@@ -47,7 +47,7 @@ public class Comment {
     public Comment() {
     }
 
-    public Long getId() {
+    public long getId() {
         return id;
     }
 
