@@ -1,12 +1,15 @@
 package com.xebia.fs101.writerpad.domain;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.xebia.fs101.writerpad.utils.StringUtils;
 
 import javax.persistence.CollectionTable;
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -60,8 +63,13 @@ public class Article {
     private long favoritesCount = 0;
 
 
+    @JsonIgnore
     @OneToMany(mappedBy = "article")
     private List<Comment> comments;
+
+    @Enumerated(EnumType.STRING)
+    private ArticleStatus status;
+
 
     public Article update(Article copyFrom) {
 
@@ -76,6 +84,9 @@ public class Article {
         }
         if (copyFrom.getTags().size() > 0) {
             this.tags = copyFrom.getTags();
+        }
+        if (Objects.nonNull(copyFrom.getStatus())) {
+            this.status = copyFrom.getStatus();
         }
 
         this.updatedAt = new Date();
@@ -94,6 +105,7 @@ public class Article {
         updatedAt = builder.updatedAt;
         favorited = builder.favorited;
         favoritesCount = builder.favoritesCount;
+        status = builder.status;
     }
 
     public UUID getId() {
@@ -142,6 +154,18 @@ public class Article {
         return favoritesCount;
     }
 
+    public List<Comment> getComments() {
+        return comments;
+    }
+
+    public ArticleStatus getStatus() {
+        return status;
+    }
+
+    public Article publish() {
+        this.status=ArticleStatus.PUBLISH;
+        return this;
+    }
 
     public static final class Builder {
         private String title;
@@ -152,6 +176,7 @@ public class Article {
         private Date updatedAt;
         private boolean favorited;
         private long favoritesCount;
+        public ArticleStatus status=ArticleStatus.DRAFT;
 
         public Builder() {
         }
@@ -198,6 +223,11 @@ public class Article {
             return this;
         }
 
+        public Builder withStatus(ArticleStatus val) {
+            status = val;
+            return this;
+        }
+
         public Article build() {
             return new Article(this);
         }
@@ -218,6 +248,7 @@ public class Article {
                 + ", updatedAt=" + updatedAt
                 + ", isFavorite=" + favorited
                 + ", favoriteCount=" + favoritesCount
+                + ", status=" + status
                 + '}';
     }
 

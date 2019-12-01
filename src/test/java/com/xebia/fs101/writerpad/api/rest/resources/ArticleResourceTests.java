@@ -4,6 +4,7 @@ package com.xebia.fs101.writerpad.api.rest.resources;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xebia.fs101.writerpad.api.rest.representations.ArticleRequest;
 import com.xebia.fs101.writerpad.domain.Article;
+import com.xebia.fs101.writerpad.domain.ArticleStatus;
 import com.xebia.fs101.writerpad.repositories.ArticleRepository;
 import com.xebia.fs101.writerpad.services.ArticleService;
 import org.junit.jupiter.api.AfterEach;
@@ -24,7 +25,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.mockito.Mockito.doThrow;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -82,7 +86,8 @@ class ArticleResourceTests {
                 .andExpect(jsonPath("$.updatedAt").isNotEmpty())
                 .andExpect(jsonPath("$.favorited").isBoolean())
                 .andExpect(jsonPath("$.favorited").value(false))
-                .andExpect(jsonPath("$.favoritesCount").value(0));
+                .andExpect(jsonPath("$.favoritesCount").value(0))
+                .andExpect(jsonPath("$.status").value("DRAFT"));
     }
 
 
@@ -103,7 +108,9 @@ class ArticleResourceTests {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").isNotEmpty())
                 .andExpect(jsonPath("$.tags").isArray())
-                .andExpect(jsonPath("$.tags").value(containsInAnyOrder("java", "spring-boot", "tutorial")));
+                .andExpect(jsonPath("$.tags")
+                        .value(containsInAnyOrder("java", "spring-boot", "tutorial")))
+                .andExpect(jsonPath("$.status").value("DRAFT"));
     }
 
     @Test
@@ -189,8 +196,8 @@ class ArticleResourceTests {
                 .andExpect(jsonPath("$.updatedAt").value(not(savedArticle.getUpdatedAt())))
                 .andExpect(jsonPath("$.favorited").isBoolean())
                 .andExpect(jsonPath("$.favorited").value(false))
-                .andExpect(jsonPath("$.favoritesCount").value(0));
-        ;
+                .andExpect(jsonPath("$.favoritesCount").value(0))
+                .andExpect(jsonPath("$.status").value("DRAFT"));
 
 
     }
@@ -221,7 +228,8 @@ class ArticleResourceTests {
                 .andExpect(jsonPath("$.updatedAt").isNotEmpty())
                 .andExpect(jsonPath("$.favorited").isBoolean())
                 .andExpect(jsonPath("$.favorited").value(false))
-                .andExpect(jsonPath("$.favoritesCount").value(0));
+                .andExpect(jsonPath("$.favoritesCount").value(0))
+                .andExpect(jsonPath("$.status").value("DRAFT"));
     }
 
 
@@ -254,6 +262,7 @@ class ArticleResourceTests {
                 .withTitle(title)
                 .withDescription(description)
                 .withBody(body)
+                .withUpdatedAt()
                 .build();
     }
 
@@ -279,5 +288,42 @@ class ArticleResourceTests {
         ).andDo(print())
                 .andExpect(status().isNotFound());
     }
+
+    @Test
+    void should_list_all_drafted_articles() throws Exception {
+        Article article1 = createArticle("Title1", "Description1", "body1");
+        Article article2 = createArticle("Title2", "description2", "body2");
+        Article article3 = createArticle("Title3", "description3", "body3")
+                .publish();
+        articleRepository.saveAll(Arrays.asList(article1, article2, article3));
+        this.mockMvc.perform(get("/api/articles?status=DRAFT"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2));
+    }
+
+
+    @Test
+    void should_publish_an_article() throws Exception {
+        Article article = createArticle("Title", "Description", "body");
+        articleRepository.save(article);
+        String slugId=String.format("%s-%s",article.getSlug(),article.getId());
+        this.mockMvc.perform(patch("/api/articles/{slug_id}/publish",slugId))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").isNotEmpty())
+                .andExpect(jsonPath("$.id").value(article.getId().toString()))
+                .andExpect(jsonPath("$.title").value("Title"))
+                .andExpect(jsonPath("$.slug").value("title"))
+                .andExpect(jsonPath("$.description").value("Description"))
+                .andExpect(jsonPath("$.body").value("body"))
+                .andExpect(jsonPath("$.createdAt").isNotEmpty())
+                .andExpect(jsonPath("$.updatedAt").isNotEmpty())
+                .andExpect(jsonPath("$.favorited").isBoolean())
+                .andExpect(jsonPath("$.favorited").value(false))
+                .andExpect(jsonPath("$.favoritesCount").value(0))
+                .andExpect(jsonPath("$.status").value("PUBLISH"));
+    }
+
 
 }

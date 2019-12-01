@@ -2,6 +2,7 @@ package com.xebia.fs101.writerpad.services;
 
 
 import com.xebia.fs101.writerpad.domain.Article;
+import com.xebia.fs101.writerpad.domain.ArticleStatus;
 import com.xebia.fs101.writerpad.repositories.ArticleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
@@ -48,5 +49,15 @@ public class ArticleService {
         }
         return false;
 
+    }
+
+    public List<Article> findAllByStatus(ArticleStatus status, Pageable pageable) {
+        return this.articleRepository.findAllByStatus(status,pageable);
+    }
+
+    public Optional<Article> publish(String slugId) {
+        Optional<Article> optionalArticle = this.findById(toUuid(slugId));
+        return optionalArticle
+                .map(article -> this.articleRepository.save(article.publish()));
     }
 }

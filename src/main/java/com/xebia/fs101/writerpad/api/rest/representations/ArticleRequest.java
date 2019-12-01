@@ -23,12 +23,14 @@ public class ArticleRequest {
 
     private String featuredImageUrl;
 
+
     private ArticleRequest(Builder builder) {
         title = builder.title;
         description = builder.description;
         body = builder.body;
         tags = builder.tags;
         featuredImageUrl = builder.featuredImageUrl;
+
     }
 
     public String getTitle() {
@@ -72,6 +74,7 @@ public class ArticleRequest {
         private Set<String> tags;
         private String featuredImageUrl;
 
+
         public Builder() {
         }
 
@@ -99,6 +102,7 @@ public class ArticleRequest {
             featuredImageUrl = val;
             return this;
         }
+
 
         public ArticleRequest build() {
             return new ArticleRequest(this);
