@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -36,7 +37,10 @@ public class ArticleService {
     }
 
 
-    public List<Article> findAll(Pageable pageable) {
+    public List<Article> findAll(String status, Pageable pageable) {
+        if (Objects.nonNull(status)) {
+            return this.articleRepository.findAllByStatus(ArticleStatus.valueOf(status), pageable);
+        }
         return this.articleRepository.findAll(pageable).getContent();
     }
 
@@ -51,9 +55,6 @@ public class ArticleService {
 
     }
 
-    public List<Article> findAllByStatus(ArticleStatus status, Pageable pageable) {
-        return this.articleRepository.findAllByStatus(status,pageable);
-    }
 
     public Optional<Article> publish(String slugId) {
         Optional<Article> optionalArticle = this.findById(toUuid(slugId));

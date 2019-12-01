@@ -2,7 +2,6 @@ package com.xebia.fs101.writerpad.api.rest.resources;
 
 import com.xebia.fs101.writerpad.api.rest.representations.ArticleRequest;
 import com.xebia.fs101.writerpad.domain.Article;
-import com.xebia.fs101.writerpad.domain.ArticleStatus;
 import com.xebia.fs101.writerpad.services.ArticleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
@@ -20,7 +19,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 import static com.xebia.fs101.writerpad.utils.StringUtils.toUuid;
@@ -71,16 +69,10 @@ public class ArticleResource {
 
 
     @GetMapping
-    public ResponseEntity<List<Article>> getAll(@RequestParam(name = "status",required = false) String status,
-                                                Pageable pageable) {
+    public ResponseEntity<List<Article>> getAll(@RequestParam(name = "status", required = false)
+                                                        String status, Pageable pageable) {
 
-        if(Objects.nonNull(status))
-        {
-           List<Article> articlesByStatus=this.articleService.findAllByStatus(ArticleStatus.valueOf(status),pageable);
-            return new ResponseEntity<>(articlesByStatus, HttpStatus.OK);
-        }
-
-        List<Article> foundArticle= this.articleService.findAll(pageable);
+        List<Article> foundArticle = this.articleService.findAll(status, pageable);
         return new ResponseEntity<>(foundArticle, HttpStatus.OK);
     }
 

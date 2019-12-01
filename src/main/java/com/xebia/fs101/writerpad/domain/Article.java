@@ -163,7 +163,7 @@ public class Article {
     }
 
     public Article publish() {
-        this.status=ArticleStatus.PUBLISH;
+        this.status = ArticleStatus.PUBLISH;
         return this;
     }
 
@@ -176,7 +176,7 @@ public class Article {
         private Date updatedAt;
         private boolean favorited;
         private long favoritesCount;
-        public ArticleStatus status=ArticleStatus.DRAFT;
+        public ArticleStatus status = ArticleStatus.DRAFT;
 
         public Builder() {
         }
