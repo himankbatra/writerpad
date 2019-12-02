@@ -3,10 +3,12 @@ package com.xebia.fs101.writerpad.api.rest.resources;
 import com.xebia.fs101.writerpad.api.rest.representations.ArticleRequest;
 import com.xebia.fs101.writerpad.domain.Article;
 import com.xebia.fs101.writerpad.services.ArticleService;
+import com.xebia.fs101.writerpad.services.mail.MailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mail.MailException;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -29,6 +31,9 @@ public class ArticleResource {
 
     @Autowired
     private ArticleService articleService;
+
+    @Autowired
+    private MailService mailService;
 
     @PostMapping
     public ResponseEntity<Article> create(@Valid @RequestBody ArticleRequest articleRequest) {
@@ -53,10 +58,16 @@ public class ArticleResource {
 
     @PostMapping(path = "/{slug_id}/publish")
     public ResponseEntity<Article> publish(@PathVariable("slug_id") final String slugId) {
-        Optional<Article> optionalPublishedArticle =
-                this.articleService.publish(slugId);
-        return optionalPublishedArticle.map(ResponseEntity::ok)
-                .orElse(ResponseEntity.badRequest().build());
+        boolean publish = this.articleService.publish(slugId);
+        try {
+            this.mailService.sendEmail("publish article"
+                    , "Publishing an article with Article Id " + toUuid(slugId));
+        } catch (MailException e) {
+            e.getMessage();
+        }
+        return publish
+                ? ResponseEntity.status(HttpStatus.NO_CONTENT).build()
+                : ResponseEntity.badRequest().build();
     }
 
 

@@ -20,6 +20,7 @@ import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import javax.persistence.Transient;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -131,7 +132,7 @@ public class Article {
     }
 
     public Set<String> getTags() {
-        return tags;
+        return tags == null ? new HashSet<>() : tags;
     }
 
     public String getFeaturedImageUrl() {

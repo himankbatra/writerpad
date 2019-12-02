@@ -56,10 +56,11 @@ public class ArticleService {
     }
 
 
-    public Optional<Article> publish(String slugId) {
+    public boolean publish(String slugId) {
         Optional<Article> optionalArticle = this.findById(toUuid(slugId));
         return optionalArticle
                 .filter(article -> article.getStatus() != ArticleStatus.PUBLISH)
-                .map(article -> this.articleRepository.save(article.publish()));
+                .map(article -> this.articleRepository.save(article.publish())).isPresent();
+
     }
 }

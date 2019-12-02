@@ -1,7 +1,6 @@
 package com.xebia.fs101.writerpad.services;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.ResourceLoader;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -18,15 +17,14 @@ import java.util.Set;
 public class SpamChecker {
 
 
-    private Set<String> spamWords;
+    Set<String> spamWords;
 
-    @Autowired
-    private ResourceLoader resource;
+    @Value("${file.spamwords}")
+    private File spamWordFile;
 
     @PostConstruct
     public void init() throws IOException {
-        File file = resource.getResource("classpath:spamwords.txt").getFile();
-        List<String> lines = Files.readAllLines(file.toPath());
+        List<String> lines = Files.readAllLines(spamWordFile.toPath());
         this.spamWords = new HashSet<>(lines);
     }
 
@@ -38,5 +36,25 @@ public class SpamChecker {
             return true;
         }
         return false;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        SpamChecker that = (SpamChecker) o;
+
+        if (spamWords != null
+                ? !spamWords.equals(that.spamWords) : that.spamWords != null) return false;
+        return spamWordFile != null
+                ? spamWordFile.equals(that.spamWordFile) : that.spamWordFile == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = spamWords != null ? spamWords.hashCode() : 0;
+        result = 31 * result + (spamWordFile != null ? spamWordFile.hashCode() : 0);
+        return result;
     }
 }

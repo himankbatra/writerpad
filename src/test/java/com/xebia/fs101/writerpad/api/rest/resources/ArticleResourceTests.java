@@ -4,6 +4,7 @@ package com.xebia.fs101.writerpad.api.rest.resources;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xebia.fs101.writerpad.api.rest.representations.ArticleRequest;
 import com.xebia.fs101.writerpad.domain.Article;
+import com.xebia.fs101.writerpad.domain.ArticleStatus;
 import com.xebia.fs101.writerpad.repositories.ArticleRepository;
 import com.xebia.fs101.writerpad.services.ArticleService;
 import org.junit.jupiter.api.AfterEach;
@@ -14,6 +15,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Arrays;
@@ -34,6 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@ActiveProfiles("test")
 class ArticleResourceTests {
 
 
@@ -309,20 +312,19 @@ class ArticleResourceTests {
         String slugId = String.format("%s-%s", article.getSlug(), article.getId());
         this.mockMvc.perform(post("/api/articles/{slug_id}/publish", slugId))
                 .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").isNotEmpty())
-                .andExpect(jsonPath("$.id").value(article.getId().toString()))
-                .andExpect(jsonPath("$.title").value("Title"))
-                .andExpect(jsonPath("$.slug").value("title"))
-                .andExpect(jsonPath("$.description").value("Description"))
-                .andExpect(jsonPath("$.body").value("body"))
-                .andExpect(jsonPath("$.createdAt").isNotEmpty())
-                .andExpect(jsonPath("$.updatedAt").isNotEmpty())
-                .andExpect(jsonPath("$.favorited").isBoolean())
-                .andExpect(jsonPath("$.favorited").value(false))
-                .andExpect(jsonPath("$.favoritesCount").value(0))
-                .andExpect(jsonPath("$.status").value("PUBLISH"));
+                .andExpect(status().isNoContent());
+        assertThat(articleRepository.findById(article.getId())
+                .filter(a -> a.getStatus() == ArticleStatus.PUBLISH).isPresent()).isTrue();
     }
 
+    @Test
+    void should_give_bad_request_when_tried_to_publish_the_already_published_article() throws Exception {
+        Article article = createArticle("Title", "Desc", "Body").publish();
+        Article saved = articleRepository.save(article);
+        String id = String.format("%s-%s", saved.getSlug(), saved.getId());
+        this.mockMvc.perform(post("/api/articles/{slugUuid}/publish", id))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+    }
 
 }
