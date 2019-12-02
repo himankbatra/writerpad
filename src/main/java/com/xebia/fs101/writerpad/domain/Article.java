@@ -252,4 +252,51 @@ public class Article {
                 + '}';
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Article article = (Article) o;
+
+        if (favorited != article.favorited) return false;
+        if (favoritesCount != article.favoritesCount) return false;
+        if (id != null ? !id.equals(article.id) : article.id != null) return false;
+        if (title != null ? !title.equals(article.title) : article.title != null) return false;
+        if (slug != null ? !slug.equals(article.slug) : article.slug != null) return false;
+        if (body != null ? !body.equals(article.body) : article.body != null) return false;
+        if (description != null
+                ? !description.equals(article.description) : article.description != null)
+            return false;
+        if (tags != null ? !tags.equals(article.tags) : article.tags != null) return false;
+        if (featuredImageUrl != null
+                ? !featuredImageUrl.equals(article.featuredImageUrl)
+                : article.featuredImageUrl != null) return false;
+        if (createdAt != null
+                ? !createdAt.equals(article.createdAt) : article.createdAt != null) return false;
+        if (updatedAt != null
+                ? !updatedAt.equals(article.updatedAt) : article.updatedAt != null) return false;
+        if (comments != null
+                ? !comments.equals(article.comments) : article.comments != null) return false;
+        return status == article.status;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = id != null ? id.hashCode() : 0;
+        result = 31 * result + (title != null ? title.hashCode() : 0);
+        result = 31 * result + (slug != null ? slug.hashCode() : 0);
+        result = 31 * result + (body != null ? body.hashCode() : 0);
+        result = 31 * result + (description != null ? description.hashCode() : 0);
+        result = 31 * result + (tags != null ? tags.hashCode() : 0);
+        result = 31 * result
+                + (featuredImageUrl != null ? featuredImageUrl.hashCode() : 0);
+        result = 31 * result + (createdAt != null ? createdAt.hashCode() : 0);
+        result = 31 * result + (updatedAt != null ? updatedAt.hashCode() : 0);
+        result = 31 * result + (favorited ? 1 : 0);
+        result = 31 * result + (int) (favoritesCount ^ (favoritesCount >>> 32));
+        result = 31 * result + (comments != null ? comments.hashCode() : 0);
+        result = 31 * result + (status != null ? status.hashCode() : 0);
+        return result;
+    }
 }
