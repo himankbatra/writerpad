@@ -4,7 +4,6 @@ package com.xebia.fs101.writerpad.api.rest.resources;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xebia.fs101.writerpad.api.rest.representations.ArticleRequest;
 import com.xebia.fs101.writerpad.domain.Article;
-import com.xebia.fs101.writerpad.domain.ArticleStatus;
 import com.xebia.fs101.writerpad.repositories.ArticleRepository;
 import com.xebia.fs101.writerpad.services.ArticleService;
 import org.junit.jupiter.api.AfterEach;
@@ -307,8 +306,8 @@ class ArticleResourceTests {
     void should_publish_an_article() throws Exception {
         Article article = createArticle("Title", "Description", "body");
         articleRepository.save(article);
-        String slugId=String.format("%s-%s",article.getSlug(),article.getId());
-        this.mockMvc.perform(patch("/api/articles/{slug_id}/publish",slugId))
+        String slugId = String.format("%s-%s", article.getSlug(), article.getId());
+        this.mockMvc.perform(post("/api/articles/{slug_id}/publish", slugId))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").isNotEmpty())

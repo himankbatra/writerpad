@@ -2,7 +2,6 @@ package com.xebia.fs101.writerpad.api.rest.resources;
 
 import com.xebia.fs101.writerpad.api.rest.representations.ArticleRequest;
 import com.xebia.fs101.writerpad.domain.Article;
-import com.xebia.fs101.writerpad.domain.ArticleStatus;
 import com.xebia.fs101.writerpad.services.ArticleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;

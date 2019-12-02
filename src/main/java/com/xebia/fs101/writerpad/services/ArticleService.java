@@ -59,7 +59,7 @@ public class ArticleService {
     public Optional<Article> publish(String slugId) {
         Optional<Article> optionalArticle = this.findById(toUuid(slugId));
         return optionalArticle
-                .filter(article -> article.getStatus()!=ArticleStatus.PUBLISH)
+                .filter(article -> article.getStatus() != ArticleStatus.PUBLISH)
                 .map(article -> this.articleRepository.save(article.publish()));
     }
 }
