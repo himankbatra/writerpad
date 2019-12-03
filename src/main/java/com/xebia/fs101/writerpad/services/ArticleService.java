@@ -3,8 +3,10 @@ package com.xebia.fs101.writerpad.services;
 
 import com.xebia.fs101.writerpad.domain.Article;
 import com.xebia.fs101.writerpad.domain.ArticleStatus;
+import com.xebia.fs101.writerpad.domain.ReadingTime;
 import com.xebia.fs101.writerpad.repositories.ArticleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +22,9 @@ public class ArticleService {
 
     @Autowired
     private ArticleRepository articleRepository;
+
+    @Value("${average_speed_of_human_to_read_per_word}")
+    int averageSpeed;
 
 
     public Article save(Article article) {
@@ -62,5 +67,14 @@ public class ArticleService {
                 .filter(article -> article.getStatus() != ArticleStatus.PUBLISH)
                 .map(article -> this.articleRepository.save(article.publish())).isPresent();
 
+    }
+
+    public ReadingTime calculateReadTime(String content) {
+        int wordsCount = content.split("\\s").length;
+        double oneWordSpeed = (double) 60 / averageSpeed;
+        int readTimeInSeconds = (int) (wordsCount * oneWordSpeed);
+        int minutes = (readTimeInSeconds / 60) % 60;
+        int seconds = readTimeInSeconds % 60;
+        return new ReadingTime(minutes, seconds);
     }
 }

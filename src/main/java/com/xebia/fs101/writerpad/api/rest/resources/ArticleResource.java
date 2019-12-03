@@ -1,6 +1,7 @@
 package com.xebia.fs101.writerpad.api.rest.resources;
 
 import com.xebia.fs101.writerpad.api.rest.representations.ArticleRequest;
+import com.xebia.fs101.writerpad.api.rest.representations.ReadingTimeResponse;
 import com.xebia.fs101.writerpad.domain.Article;
 import com.xebia.fs101.writerpad.services.ArticleService;
 import com.xebia.fs101.writerpad.services.mail.MailService;
@@ -36,6 +37,7 @@ public class ArticleResource {
 
     @Autowired
     private MailService mailService;
+
 
     @PostMapping
     public ResponseEntity<Article> create(@Valid @RequestBody ArticleRequest articleRequest) {
@@ -96,6 +98,16 @@ public class ArticleResource {
     @ExceptionHandler(MailException.class)
     void mailException(Exception ex) {
         // log error
+    }
+
+
+    @GetMapping(path = "/{slug_id}/timetoread")
+    public ResponseEntity<ReadingTimeResponse> timeToRead(@PathVariable("slug_id") String slugId) {
+        Optional<Article> optionalFoundArticle = this.articleService.findById(toUuid(slugId));
+        return optionalFoundArticle.map(article ->
+                new ResponseEntity<>(new ReadingTimeResponse(slugId
+                        , this.articleService.calculateReadTime(article.getBody())),
+                        HttpStatus.OK)).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
 }

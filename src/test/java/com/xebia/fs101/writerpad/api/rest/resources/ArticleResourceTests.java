@@ -327,4 +327,23 @@ class ArticleResourceTests {
                 .andExpect(status().isBadRequest());
     }
 
+    @Test
+    void should_give_read_time_of_an_article_when_i_provide_valid_data() throws Exception {
+        Article article =
+                createArticle("Title", "Desc", "You have to believe")
+                        .publish();
+        Article saved = articleRepository.save(article);
+        String id = String.format("%s-%s", saved.getSlug(), saved.getId());
+        this.mockMvc.perform(get("/api/articles/{slugUuid}/timetoread", id))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.articleId").isNotEmpty())
+                .andExpect(jsonPath("$.articleId").value(id))
+                .andExpect(jsonPath("$.readingTime").hasJsonPath())
+                .andExpect(jsonPath("$..minutes").value(0))
+                .andExpect(jsonPath("$..seconds").value(1));
+
+    }
+
+
 }

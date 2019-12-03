@@ -1,8 +1,9 @@
 package com.xebia.fs101.writerpad.services;
 
 import com.xebia.fs101.writerpad.domain.Article;
+import com.xebia.fs101.writerpad.domain.ReadingTime;
 import com.xebia.fs101.writerpad.repositories.ArticleRepository;
-import org.junit.jupiter.api.AfterEach;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -12,7 +13,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
@@ -31,7 +31,6 @@ class ArticleServiceTests {
 
     @InjectMocks
     private ArticleService articleService;
-
 
 
     @Test
@@ -123,4 +122,13 @@ class ArticleServiceTests {
         verify(articleRepository, times(1)).findById(id);
         verifyNoMoreInteractions(articleRepository);
     }
+
+    @Test
+    void should_calculate_reading_time_for_an_article_when_i_provide_valid_data() {
+        articleService.averageSpeed = 200;
+        String content = "You have to believe";
+        ReadingTime readingTime = articleService.calculateReadTime(content);
+        Assertions.assertThat(readingTime).isEqualToComparingFieldByField(new ReadingTime(0, 1));
+    }
+
 }

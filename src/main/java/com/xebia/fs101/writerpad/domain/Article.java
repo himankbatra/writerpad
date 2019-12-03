@@ -72,6 +72,7 @@ public class Article {
     private ArticleStatus status;
 
 
+
     public Article update(Article copyFrom) {
 
         if (Objects.nonNull(copyFrom.getTitle())) {
@@ -177,7 +178,7 @@ public class Article {
         private Date updatedAt;
         private boolean favorited;
         private long favoritesCount;
-        public ArticleStatus status = ArticleStatus.DRAFT;
+        private ArticleStatus status = ArticleStatus.DRAFT;
 
         public Builder() {
         }
