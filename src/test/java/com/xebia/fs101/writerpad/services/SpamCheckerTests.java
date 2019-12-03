@@ -2,19 +2,14 @@ package com.xebia.fs101.writerpad.services;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashSet;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@ExtendWith(MockitoExtension.class)
+
 class SpamCheckerTests {
 
     private SpamChecker spamChecker;
@@ -22,7 +17,7 @@ class SpamCheckerTests {
     @BeforeEach
     void setUp() throws IOException {
         spamChecker = new SpamChecker();
-        spamChecker.spamWords= new HashSet<>(Arrays.asList("semen","spam"));
+        spamChecker.spamWords = new HashSet<>(Arrays.asList("semen", "spam"));
     }
 
     @Test
