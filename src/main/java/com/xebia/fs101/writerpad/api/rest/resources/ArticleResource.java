@@ -5,7 +5,6 @@ import com.xebia.fs101.writerpad.domain.Article;
 import com.xebia.fs101.writerpad.services.ArticleService;
 import com.xebia.fs101.writerpad.services.mail.MailService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -62,13 +61,12 @@ public class ArticleResource {
     @PostMapping(path = "/{slug_id}/publish")
     public ResponseEntity<Article> publish(@PathVariable("slug_id") final String slugId) {
         boolean publish = this.articleService.publish(slugId);
-            this.mailService.sendEmail("publish article"
-                    , "Publishing an article with Article Id " + toUuid(slugId));
+        this.mailService.sendEmail("publish article"
+                , "Publishing an article with Article Id " + toUuid(slugId));
         return publish
                 ? ResponseEntity.status(HttpStatus.NO_CONTENT).build()
                 : ResponseEntity.badRequest().build();
     }
-
 
 
     @GetMapping(path = "/{slug_id}")
@@ -96,8 +94,7 @@ public class ArticleResource {
 
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @ExceptionHandler(MailException.class)
-    void mailException(Exception ex)
-    {
+    void mailException(Exception ex) {
         // log error
     }
 
