@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @Profile("!test")
-public class GMailService {
+public class GMailService implements MailService {
 
     @Autowired
     private JavaMailSender javaMailSender;
