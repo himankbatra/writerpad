@@ -81,6 +81,7 @@ class ArticleServiceTests {
                 .thenReturn(new PageImpl<Article>(Collections.singletonList(new Article())));
         articleService.findAll(null, pageable);
         verify(articleRepository).findAll(pageable);
+        verifyNoMoreInteractions(articleRepository);
     }
 
     @Test
