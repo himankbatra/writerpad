@@ -1,7 +1,7 @@
 package com.xebia.fs101.writerpad.domain;
 
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.xebia.fs101.writerpad.utils.StringUtils;
 
 import javax.persistence.CollectionTable;
@@ -59,18 +59,18 @@ public class Article {
     @Temporal(TemporalType.TIMESTAMP)
     private Date updatedAt;
 
-    private boolean favorited = false;
+    private boolean favourited = false;
 
-    private long favoritesCount = 0;
+    private long favouritesCount = 0;
 
 
-    @JsonIgnore
+    // @JsonIgnore
+    @JsonBackReference
     @OneToMany(mappedBy = "article")
     private List<Comment> comments;
 
     @Enumerated(EnumType.STRING)
     private ArticleStatus status;
-
 
 
     public Article update(Article copyFrom) {
@@ -105,8 +105,8 @@ public class Article {
         tags = builder.tags;
         featuredImageUrl = builder.featuredImageUrl;
         updatedAt = builder.updatedAt;
-        favorited = builder.favorited;
-        favoritesCount = builder.favoritesCount;
+        favourited = builder.favorited;
+        favouritesCount = builder.favoritesCount;
         status = builder.status;
     }
 
@@ -148,12 +148,12 @@ public class Article {
         return updatedAt;
     }
 
-    public boolean isFavorited() {
-        return favorited;
+    public boolean isFavourited() {
+        return favourited;
     }
 
-    public long getFavoritesCount() {
-        return favoritesCount;
+    public long getFavouritesCount() {
+        return favouritesCount;
     }
 
     public List<Comment> getComments() {
@@ -168,6 +168,17 @@ public class Article {
         this.status = ArticleStatus.PUBLISH;
         return this;
     }
+
+    public void favourite() {
+        this.favourited = true;
+        this.favouritesCount++;
+    }
+
+    public void unFavourite() {
+        this.favouritesCount--;
+        this.favourited = this.favouritesCount != 0;
+    }
+
 
     public static final class Builder {
         private String title;
@@ -244,12 +255,11 @@ public class Article {
                 + ", slug='" + slug + '\''
                 + ", body='" + body + '\''
                 + ", description='" + description + '\''
-                + ", tags=" + tags
                 + ", featuredImageUrl='" + featuredImageUrl + '\''
                 + ", createdAt=" + createdAt
                 + ", updatedAt=" + updatedAt
-                + ", isFavorite=" + favorited
-                + ", favoriteCount=" + favoritesCount
+                + ", isFavorite=" + favourited
+                + ", favoriteCount=" + favouritesCount
                 + ", status=" + status
                 + '}';
     }
@@ -261,25 +271,32 @@ public class Article {
 
         Article article = (Article) o;
 
-        if (favorited != article.favorited) return false;
-        if (favoritesCount != article.favoritesCount) return false;
+        if (favourited != article.favourited) return false;
+        if (favouritesCount != article.favouritesCount) return false;
         if (id != null ? !id.equals(article.id) : article.id != null) return false;
-        if (title != null ? !title.equals(article.title) : article.title != null) return false;
-        if (slug != null ? !slug.equals(article.slug) : article.slug != null) return false;
-        if (body != null ? !body.equals(article.body) : article.body != null) return false;
+        if (title != null ? !title.equals(article.title) : article.title != null)
+            return false;
+        if (slug != null ? !slug.equals(article.slug) : article.slug != null)
+            return false;
+        if (body != null ? !body.equals(article.body) : article.body != null)
+            return false;
         if (description != null
                 ? !description.equals(article.description) : article.description != null)
             return false;
-        if (tags != null ? !tags.equals(article.tags) : article.tags != null) return false;
+        if (tags != null ? !tags.equals(article.tags) : article.tags != null)
+            return false;
         if (featuredImageUrl != null
                 ? !featuredImageUrl.equals(article.featuredImageUrl)
                 : article.featuredImageUrl != null) return false;
         if (createdAt != null
-                ? !createdAt.equals(article.createdAt) : article.createdAt != null) return false;
+                ? !createdAt.equals(article.createdAt) : article.createdAt != null)
+            return false;
         if (updatedAt != null
-                ? !updatedAt.equals(article.updatedAt) : article.updatedAt != null) return false;
+                ? !updatedAt.equals(article.updatedAt) : article.updatedAt != null)
+            return false;
         if (comments != null
-                ? !comments.equals(article.comments) : article.comments != null) return false;
+                ? !comments.equals(article.comments) : article.comments != null)
+            return false;
         return status == article.status;
     }
 
@@ -295,8 +312,8 @@ public class Article {
                 + (featuredImageUrl != null ? featuredImageUrl.hashCode() : 0);
         result = 31 * result + (createdAt != null ? createdAt.hashCode() : 0);
         result = 31 * result + (updatedAt != null ? updatedAt.hashCode() : 0);
-        result = 31 * result + (favorited ? 1 : 0);
-        result = 31 * result + (int) (favoritesCount ^ (favoritesCount >>> 32));
+        result = 31 * result + (favourited ? 1 : 0);
+        result = 31 * result + (int) (favouritesCount ^ (favouritesCount >>> 32));
         result = 31 * result + (comments != null ? comments.hashCode() : 0);
         result = 31 * result + (status != null ? status.hashCode() : 0);
         return result;

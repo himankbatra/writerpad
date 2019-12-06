@@ -2,8 +2,11 @@ package com.xebia.fs101.writerpad.api.rest.resources;
 
 import com.xebia.fs101.writerpad.api.rest.representations.ArticleRequest;
 import com.xebia.fs101.writerpad.api.rest.representations.ReadingTimeResponse;
+import com.xebia.fs101.writerpad.api.rest.representations.TagResponse;
 import com.xebia.fs101.writerpad.domain.Article;
+import com.xebia.fs101.writerpad.domain.ReadingTime;
 import com.xebia.fs101.writerpad.services.ArticleService;
+import com.xebia.fs101.writerpad.services.ReadingTimeService;
 import com.xebia.fs101.writerpad.services.mail.MailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
@@ -16,6 +19,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -24,7 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static com.xebia.fs101.writerpad.utils.StringUtils.toUuid;
 
@@ -37,6 +41,9 @@ public class ArticleResource {
 
     @Autowired
     private MailService mailService;
+
+    @Autowired
+    private ReadingTimeService readingTimeService;
 
 
     @PostMapping
@@ -54,10 +61,10 @@ public class ArticleResource {
     @PatchMapping(path = "/{slug_id}")
     public ResponseEntity<Article> update(@RequestBody ArticleRequest articleRequest,
                                           @PathVariable("slug_id") final String slugId) {
-        Optional<Article> optionalUpdatedArticle =
+        Article updatedArticle =
                 this.articleService.update(slugId, articleRequest.toArticle());
-        return optionalUpdatedArticle.map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        return ResponseEntity.ok(updatedArticle);
+
     }
 
     @PostMapping(path = "/{slug_id}/publish")
@@ -73,15 +80,17 @@ public class ArticleResource {
 
     @GetMapping(path = "/{slug_id}")
     public ResponseEntity<Article> get(@PathVariable("slug_id") final String slugId) {
-        Optional<Article> optionalFoundArticle = this.articleService.findById(toUuid(slugId));
-        return optionalFoundArticle.map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        Article foundArticle =
+                this.articleService.findById(slugId);
+        return ResponseEntity.ok(foundArticle);
     }
 
 
     @GetMapping
-    public ResponseEntity<List<Article>> getAll(@RequestParam(name = "status", required = false)
-                                                        String status, Pageable pageable) {
+    public ResponseEntity<List<Article>> getAll(@RequestParam(name = "status",
+            required = false)
+                                                        String status,
+                                                Pageable pageable) {
 
         List<Article> foundArticle = this.articleService.findAll(status, pageable);
         return new ResponseEntity<>(foundArticle, HttpStatus.OK);
@@ -89,9 +98,9 @@ public class ArticleResource {
 
     @DeleteMapping(path = "/{slug_id}")
     public ResponseEntity<Void> delete(@PathVariable("slug_id") final String slugId) {
-        return this.articleService.delete(slugId)
-                ? ResponseEntity.status(HttpStatus.NO_CONTENT).build()
-                : ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        this.articleService.delete(slugId);
+        return ResponseEntity.noContent().build();
+
     }
 
     @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -103,11 +112,39 @@ public class ArticleResource {
 
     @GetMapping(path = "/{slug_id}/timetoread")
     public ResponseEntity<ReadingTimeResponse> timeToRead(@PathVariable("slug_id") String slugId) {
-        Optional<Article> optionalFoundArticle = this.articleService.findById(toUuid(slugId));
-        return optionalFoundArticle.map(article ->
-                new ResponseEntity<>(new ReadingTimeResponse(slugId
-                        , this.articleService.calculateReadTime(article.getBody())),
-                        HttpStatus.OK)).orElseGet(() -> ResponseEntity.notFound().build());
+        Article article = this.articleService.findById(slugId);
+        ReadingTime readingTime =
+                this.readingTimeService.calculateReadingTime(article.getBody());
+        return ResponseEntity.ok(new ReadingTimeResponse(slugId
+                , readingTime));
     }
+
+
+    @GetMapping(path = "/tags")
+    public ResponseEntity<List<TagResponse>> getTags() {
+        List<TagResponse> collect =
+                this.articleService.getTagsWithCount().entrySet().stream()
+                        .map(e -> new TagResponse(e.getKey(), e.getValue()))
+                        .collect(Collectors.toList());
+        return new ResponseEntity<>(collect, HttpStatus.OK);
+
+    }
+
+    @PutMapping(path = "/{slug_id}/favourite")
+    public ResponseEntity<Void> setFavourite(@PathVariable(name = "slug_id") String slugId) {
+
+        this.articleService.favourite(slugId);
+        return ResponseEntity.noContent().build();
+
+    }
+
+
+    @DeleteMapping(path = "/{slug_id}/unfavourite")
+    public ResponseEntity<Void> setUnFavourite(@PathVariable(name = "slug_id") String slugId) {
+        this.articleService.unFavourite(slugId);
+        return ResponseEntity.noContent().build();
+
+    }
+
 
 }

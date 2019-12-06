@@ -1,9 +1,7 @@
 package com.xebia.fs101.writerpad.services;
 
 import com.xebia.fs101.writerpad.domain.Article;
-import com.xebia.fs101.writerpad.domain.ReadingTime;
 import com.xebia.fs101.writerpad.repositories.ArticleRepository;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -14,9 +12,13 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import java.util.Collections;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Stream;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.entry;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -49,7 +51,7 @@ class ArticleServiceTests {
     void should_be_able_to_find_an_article() {
         when(articleRepository.findById(any())).thenReturn(Optional.of(new Article()));
         UUID id = UUID.randomUUID();
-        articleService.findById(id);
+        articleService.findById("slug-" + id);
         verify(articleRepository).findById(id);
         verifyNoMoreInteractions(articleRepository);
     }
@@ -123,12 +125,64 @@ class ArticleServiceTests {
         verifyNoMoreInteractions(articleRepository);
     }
 
+
     @Test
-    void should_calculate_reading_time_for_an_article_when_i_provide_valid_data() {
-        articleService.averageSpeed = 200;
-        String content = "You have to believe";
-        ReadingTime readingTime = articleService.calculateReadTime(content);
-        Assertions.assertThat(readingTime).isEqualToComparingFieldByField(new ReadingTime(0, 1));
+    void should_get_tags_with_count_of_an_article_when_i_provide_valid_data() {
+
+        when(articleRepository.findAllTags()).thenReturn(Stream.of("t1", "t2", "t3", "t1",
+                "t2"));
+
+        Map<String, Long> tagsWithCount = articleService.getTagsWithCount();
+        assertThat(tagsWithCount).containsOnly(entry("t1", 2L), entry("t2", 2L), entry(
+                "t3"
+                , 1L));
+        verify(articleRepository, times(1)).findAllTags();
+        verifyNoMoreInteractions(articleRepository);
+    }
+
+
+    @Test
+    void should_favourite_an_article_when_i_provide_valid_data() throws Exception {
+        Optional<Article> optionalArticle = Optional.of(new Article.Builder()
+                .withFavorited(true).withFavoritesCount(1L).build());
+        when(articleRepository.findById(any())).thenReturn(optionalArticle);
+
+        UUID uuid = UUID.randomUUID();
+        this.articleService.favourite("slug-" + uuid);
+        verify(articleRepository, times(1)).findById(uuid);
+        verify(articleRepository, times(1)).save(optionalArticle.get());
+        verifyNoMoreInteractions(articleRepository);
+
+    }
+
+
+    @Test
+    void should_unfavourite_an_article_when_i_provide_valid_data() throws Exception {
+        Optional<Article> optionalArticle = Optional.of(new Article.Builder()
+                .withFavorited(false).withFavoritesCount(0L).build());
+        when(articleRepository.findById(any())).thenReturn(optionalArticle);
+
+        UUID uuid = UUID.randomUUID();
+        this.articleService.unFavourite("slug-" + uuid);
+        verify(articleRepository, times(1)).findById(uuid);
+        verify(articleRepository, times(1)).save(optionalArticle.get());
+        verifyNoMoreInteractions(articleRepository);
+
+    }
+
+
+    @Test
+    void should_get_favourite_count_as_1_when_favourites_count_is_2() throws Exception {
+        Optional<Article> optionalArticle = Optional.of(new Article.Builder()
+                .withFavorited(true).withFavoritesCount(2L).build());
+        when(articleRepository.findById(any())).thenReturn(optionalArticle);
+
+        UUID uuid = UUID.randomUUID();
+        this.articleService.favourite("slug-" + uuid);
+        verify(articleRepository, times(1)).findById(uuid);
+        verify(articleRepository, times(1)).save(optionalArticle.get());
+        verifyNoMoreInteractions(articleRepository);
+
     }
 
 }

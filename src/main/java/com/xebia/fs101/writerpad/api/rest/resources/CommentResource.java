@@ -20,9 +20,6 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.util.List;
-import java.util.Optional;
-
-import static com.xebia.fs101.writerpad.utils.StringUtils.toUuid;
 
 @RestController
 @RequestMapping(path = "/api/articles/{slug_id}/comments")
@@ -41,42 +38,35 @@ public class CommentResource {
                                           @PathVariable("slug_id") final String slugId,
                                           HttpServletRequest request) {
 
-        Optional<Article> optionalArticle = this.articleService.findById(toUuid(slugId));
-        if (optionalArticle.isPresent()) {
-            if (!this.spamChecker.isSpam(commentRequest.getBody())) {
-                Comment savedComment = this.commentService
-                        .save(commentRequest.toComment(request.getRemoteAddr(),
-                                optionalArticle.get()));
-                return new ResponseEntity<>(savedComment, HttpStatus.CREATED);
-            }
-            return ResponseEntity.badRequest().build();
+        Article article = this.articleService.findById(slugId);
+        if (!this.spamChecker.isSpam(commentRequest.getBody())) {
+            Comment savedComment = this.commentService
+                    .save(commentRequest.toComment(request.getRemoteAddr(),
+                            article));
+            return new ResponseEntity<>(savedComment, HttpStatus.CREATED);
         }
-        return ResponseEntity.notFound().build();
+        return ResponseEntity.badRequest().build();
 
     }
 
     @GetMapping
     public ResponseEntity<List<Comment>> getAll(@PathVariable("slug_id") final String slugId) {
-        Optional<Article> optionalArticle = this.articleService.findById(toUuid(slugId));
-        if (optionalArticle.isPresent()) {
-            List<Comment> foundComment =
-                    this.commentService.findAllByArticleId(optionalArticle.get().getId());
-            return new ResponseEntity<>(foundComment, HttpStatus.OK);
-        }
-        return ResponseEntity.notFound().build();
+        Article article = this.articleService.findById(slugId);
+
+        List<Comment> foundComment =
+                this.commentService.findAllByArticleId(article.getId());
+        return new ResponseEntity<>(foundComment, HttpStatus.OK);
+
     }
 
 
     @DeleteMapping(path = "/{id}")
     public ResponseEntity<Void> delete(@PathVariable("id") final Long id,
                                        @PathVariable("slug_id") final String slugId) {
-        Optional<Article> optionalArticle = this.articleService.findById(toUuid(slugId));
-        if (optionalArticle.isPresent()) {
-            return this.commentService.delete(id)
-                    ? ResponseEntity.status(HttpStatus.NO_CONTENT).build()
-                    : ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
-        return ResponseEntity.notFound().build();
+        Article article = this.articleService.findById(slugId);
+        return this.commentService.delete(id)
+                ? ResponseEntity.status(HttpStatus.NO_CONTENT).build()
+                : ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
 
 }

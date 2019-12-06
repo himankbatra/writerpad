@@ -1,6 +1,6 @@
 package com.xebia.fs101.writerpad.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -32,7 +32,8 @@ public class Comment {
 
     private String ipAddress;
 
-    @JsonIgnore
+    // @JsonIgnore
+    @JsonManagedReference
     @ManyToOne
     private Article article;
 

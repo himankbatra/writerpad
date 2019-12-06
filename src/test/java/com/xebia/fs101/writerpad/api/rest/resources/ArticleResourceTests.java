@@ -9,7 +9,6 @@ import com.xebia.fs101.writerpad.repositories.ArticleRepository;
 import com.xebia.fs101.writerpad.services.ArticleService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -20,16 +19,19 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -56,6 +58,7 @@ class ArticleResourceTests {
     @AfterEach
     void tearDown() {
         this.articleRepository.deleteAll();
+
     }
 
     @Test
@@ -86,9 +89,9 @@ class ArticleResourceTests {
                 .andExpect(jsonPath("$.body").value("You have to believe"))
                 .andExpect(jsonPath("$.createdAt").isNotEmpty())
                 .andExpect(jsonPath("$.updatedAt").isNotEmpty())
-                .andExpect(jsonPath("$.favorited").isBoolean())
-                .andExpect(jsonPath("$.favorited").value(false))
-                .andExpect(jsonPath("$.favoritesCount").value(0))
+                .andExpect(jsonPath("$.favourited").isBoolean())
+                .andExpect(jsonPath("$.favourited").value(false))
+                .andExpect(jsonPath("$.favouritesCount").value(0))
                 .andExpect(jsonPath("$.status").value("DRAFT"));
     }
 
@@ -148,7 +151,7 @@ class ArticleResourceTests {
     @Test
     void when_i_pass_article_request_without_title_should_give_status_internal_server_error() throws Exception {
 
-        doThrow(new RuntimeException()).when(articleService).save(ArgumentMatchers.any());
+        doThrow(new RuntimeException()).when(articleService).save(any());
 
         String json = "{\n" +
                 "  \"title\": \"How to learn Spring Boot\",\n" +
@@ -196,9 +199,9 @@ class ArticleResourceTests {
                 .andExpect(jsonPath("$.createdAt").isNotEmpty())
                 .andExpect(jsonPath("$.updatedAt").isNotEmpty())
                 .andExpect(jsonPath("$.updatedAt").value(not(savedArticle.getUpdatedAt())))
-                .andExpect(jsonPath("$.favorited").isBoolean())
-                .andExpect(jsonPath("$.favorited").value(false))
-                .andExpect(jsonPath("$.favoritesCount").value(0))
+                .andExpect(jsonPath("$.favourited").isBoolean())
+                .andExpect(jsonPath("$.favourited").value(false))
+                .andExpect(jsonPath("$.favouritesCount").value(0))
                 .andExpect(jsonPath("$.status").value("DRAFT"));
 
 
@@ -216,7 +219,8 @@ class ArticleResourceTests {
         Article savedArticle = articleRepository.save(article);
 
 
-        mockMvc.perform(get("/api/articles/{slug_id}", savedArticle.getSlug() + "-" + savedArticle.getId())
+        mockMvc.perform(get("/api/articles/{slug_id}",
+                savedArticle.getSlug() + "-" + savedArticle.getId())
                 .contentType(MediaType.APPLICATION_JSON))
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -228,9 +232,9 @@ class ArticleResourceTests {
                 .andExpect(jsonPath("$.body").value("spring boot"))
                 .andExpect(jsonPath("$.createdAt").isNotEmpty())
                 .andExpect(jsonPath("$.updatedAt").isNotEmpty())
-                .andExpect(jsonPath("$.favorited").isBoolean())
-                .andExpect(jsonPath("$.favorited").value(false))
-                .andExpect(jsonPath("$.favoritesCount").value(0))
+                .andExpect(jsonPath("$.favourited").isBoolean())
+                .andExpect(jsonPath("$.favourited").value(false))
+                .andExpect(jsonPath("$.favouritesCount").value(0))
                 .andExpect(jsonPath("$.status").value("DRAFT"));
     }
 
@@ -341,7 +345,81 @@ class ArticleResourceTests {
                 .andExpect(jsonPath("$.articleId").value(id))
                 .andExpect(jsonPath("$.readingTime").hasJsonPath())
                 .andExpect(jsonPath("$..minutes").value(0))
-                .andExpect(jsonPath("$..seconds").value(1));
+                .andExpect(jsonPath("$..seconds").value(12));
+
+    }
+
+    @Test
+    void should_get_tags_with_count_of_an_article_when_i_provide_valid_data() throws Exception {
+        Article article =
+                new Article.Builder().withBody("body")
+                        .withTitle("title")
+                        .withDescription("Desc")
+                        .withTags(new HashSet<>(Arrays.asList("t1", "t2", "t3", "t1",
+                                "t1")))
+                        .build();
+        Article saved = articleRepository.save(article);
+        this.mockMvc.perform(get("/api/articles/tags"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(3));
+
+    }
+
+    @Test
+    void should_favourite_an_article_when_i_provide_valid_data() throws Exception {
+        Article article = createArticle("title", "desc", "body");
+        Article saved = articleRepository.save(article);
+        String id = String.format("%s-%s", saved.getSlug(), saved.getId());
+        this.mockMvc.perform(put("/api/articles/{slug_id}/favourite", id))
+                .andDo(print())
+                .andExpect(status().isNoContent());
+        Optional<Article> articleFavouritesCount =
+                articleRepository.findById(article.getId());
+        assertThat(articleFavouritesCount.map(Article::getFavouritesCount).isPresent()).isTrue();
+        assertThat(articleFavouritesCount.map(Article::isFavourited).get()).isTrue();
+        assertThat(articleFavouritesCount.get().getFavouritesCount()).isEqualTo(1L);
+
+    }
+
+
+    @Test
+    void should_unfavourite_an_article_when_i_provide_valid_data() throws Exception {
+        Article article = createArticle("title", "desc", "body");
+        article.favourite();
+        Article saved = articleRepository.save(article);
+        String id = String.format("%s-%s", saved.getSlug(), saved.getId());
+        this.mockMvc.perform(delete("/api/articles/{slug_id}/unfavourite", id))
+                .andDo(print())
+                .andExpect(status().isNoContent());
+        Optional<Article> articleFavouritesCount =
+                articleRepository.findById(article.getId());
+        assertThat(articleFavouritesCount.map(Article::getFavouritesCount).isPresent()).isTrue();
+        assertThat(articleFavouritesCount.map(Article::isFavourited).get()).isFalse();
+        assertThat(articleFavouritesCount.get().getFavouritesCount()).isEqualTo(0L);
+
+    }
+
+
+    @Test
+    void should_get_favourite_count_as_1_when_favourites_count_is_2() throws Exception {
+        Article article = new Article.Builder()
+                .withBody("body")
+                .withDescription("desc")
+                .withTitle("title")
+                .withFavorited(true)
+                .withFavoritesCount(2L)
+                .build();
+        Article saved = articleRepository.save(article);
+        String id = String.format("%s-%s", saved.getSlug(), saved.getId());
+        this.mockMvc.perform(delete("/api/articles/{slug_id}/unfavourite", id))
+                .andDo(print())
+                .andExpect(status().isNoContent());
+        Optional<Article> articleFavouritesCount =
+                articleRepository.findById(article.getId());
+        assertThat(articleFavouritesCount.map(Article::getFavouritesCount).isPresent()).isTrue();
+        assertThat(articleFavouritesCount.map(Article::isFavourited).get()).isTrue();
+        assertThat(articleFavouritesCount.get().getFavouritesCount()).isEqualTo(1L);
 
     }
 
