@@ -59,7 +59,7 @@ class ArticleServiceTests {
     }
 
     @Test
-    public void should_be_able_to_update_an_article() {
+    void should_be_able_to_update_an_article() {
         Article article = new Article.Builder()
                 .withBody("body")
                 .withDescription("desc")
@@ -78,17 +78,17 @@ class ArticleServiceTests {
                         .withDescription("desc")
                         .withTitle("title")
                         .build();
-        verify(articleRepository).save(refEq(expectedArticle, "id", "createdAt",
+        verify(articleRepository).save(refEq(expectedArticle, "createdAt",
                 "updatedAt"));
         verifyNoMoreInteractions(articleRepository);
     }
 
     @Test
     void should_give_all_the_articles() {
-        Pageable pageable = PageRequest.of(0, 3);
-        when(articleRepository.findAll(pageable))
-                .thenReturn(new PageImpl<Article>(Collections.singletonList(new Article())));
-        articleService.findAll(null, pageable);
+        when(articleRepository.findAll(any(Pageable.class)))
+                .thenReturn(new PageImpl<>(Collections.singletonList(new Article())));
+        PageRequest pageable = PageRequest.of(0, 3);
+        this.articleService.findAll(null, pageable);
         verify(articleRepository).findAll(pageable);
         verifyNoMoreInteractions(articleRepository);
     }
@@ -97,7 +97,7 @@ class ArticleServiceTests {
     void should_be_able_to_delete_a_article() {
         when(articleRepository.findById(any())).thenReturn(Optional.of(new Article()));
         UUID id = UUID.randomUUID();
-        articleService.delete("slug-" + id);
+        this.articleService.delete("slug-" + id);
         verify(articleRepository, times(1)).findById(id);
         verify(articleRepository).deleteById(id);
         verifyNoMoreInteractions(articleRepository);
@@ -112,7 +112,8 @@ class ArticleServiceTests {
                 .build();
         when(articleRepository.findById(any())).thenReturn(Optional.of(article));
         UUID id = UUID.randomUUID();
-        articleService.publish("slug-" + id);
+        boolean publish = articleService.publish("slug-" + id);
+        assertThat(publish).isTrue();
         verify(articleRepository, times(1)).findById(id);
         Article expectedArticle =
                 new Article.Builder().withBody("body")
@@ -120,7 +121,7 @@ class ArticleServiceTests {
                         .withTitle("title")
                         .withStatus(ArticleStatus.PUBLISH)
                         .build();
-        verify(articleRepository).save(refEq(expectedArticle, "id", "createdAt"));
+        verify(articleRepository).save(refEq(expectedArticle, "createdAt"));
         verifyNoMoreInteractions(articleRepository);
     }
 
@@ -134,7 +135,8 @@ class ArticleServiceTests {
                 .publish();
         when(articleRepository.findById(any())).thenReturn(Optional.of(article));
         UUID id = UUID.randomUUID();
-        articleService.publish("slug-" + id);
+        boolean publish = articleService.publish("slug-" + id);
+        assertThat(publish).isFalse();
         verify(articleRepository, times(1)).findById(id);
         verifyNoMoreInteractions(articleRepository);
     }
@@ -158,15 +160,15 @@ class ArticleServiceTests {
     @Test
     void should_favourite_an_article_when_i_provide_valid_data() throws Exception {
         Optional<Article> optionalArticle = Optional.of(new Article.Builder()
-                .withFavorited(false).withFavoritesCount(0L).build());
+                .withFavourited(false).withFavouritesCount(0L).build());
         when(articleRepository.findById(any())).thenReturn(optionalArticle);
 
         UUID uuid = UUID.randomUUID();
         this.articleService.favourite("slug-" + uuid);
         verify(articleRepository, times(1)).findById(uuid);
         Article expectedArticle =
-                new Article.Builder().withFavorited(true).withFavoritesCount(1L).build();
-        verify(articleRepository, times(1)).save(refEq(expectedArticle, "id",
+                new Article.Builder().withFavourited(true).withFavouritesCount(1L).build();
+        verify(articleRepository, times(1)).save(refEq(expectedArticle,
                 "createdAt"));
         verifyNoMoreInteractions(articleRepository);
 
@@ -176,15 +178,15 @@ class ArticleServiceTests {
     @Test
     void should_unfavourite_an_article_when_i_provide_valid_data() throws Exception {
         Optional<Article> optionalArticle = Optional.of(new Article.Builder()
-                .withFavorited(true).withFavoritesCount(1L).build());
+                .withFavourited(true).withFavouritesCount(1L).build());
         when(articleRepository.findById(any())).thenReturn(optionalArticle);
 
         UUID uuid = UUID.randomUUID();
         this.articleService.unFavourite("slug-" + uuid);
         verify(articleRepository, times(1)).findById(uuid);
         Article expectedArticle =
-                new Article.Builder().withFavorited(false).withFavoritesCount(0L).build();
-        verify(articleRepository, times(1)).save(refEq(expectedArticle, "id",
+                new Article.Builder().withFavourited(false).withFavouritesCount(0L).build();
+        verify(articleRepository, times(1)).save(refEq(expectedArticle,
                 "createdAt"));
         verifyNoMoreInteractions(articleRepository);
 
@@ -194,14 +196,14 @@ class ArticleServiceTests {
     @Test
     void should_get_favourite_count_as_1_when_i_try_to_unfavourite_an_article_with_favourite_count_2() throws Exception {
         Optional<Article> optionalArticle = Optional.of(new Article.Builder()
-                .withFavorited(true).withFavoritesCount(2L).build());
+                .withFavourited(true).withFavouritesCount(2L).build());
         when(articleRepository.findById(any())).thenReturn(optionalArticle);
         UUID uuid = UUID.randomUUID();
         this.articleService.unFavourite("slug-" + uuid);
         verify(articleRepository, times(1)).findById(uuid);
         Article expectedArticle =
-                new Article.Builder().withFavorited(true).withFavoritesCount(1L).build();
-        verify(articleRepository, times(1)).save(refEq(expectedArticle, "id",
+                new Article.Builder().withFavourited(true).withFavouritesCount(1L).build();
+        verify(articleRepository, times(1)).save(refEq(expectedArticle,
                 "createdAt"));
         verifyNoMoreInteractions(articleRepository);
 

@@ -17,14 +17,18 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.isA;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -248,7 +252,9 @@ class ArticleResourceTests {
         this.mockMvc.perform(get("/api/articles"))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(3));
+                .andExpect(jsonPath("$.length()").value(3))
+                .andExpect(jsonPath("$[*].title",isA(ArrayList.class)))
+                .andExpect(jsonPath("$[*].title",contains("Title1","Title2","Title3")));;
     }
 
     @Test
@@ -260,7 +266,9 @@ class ArticleResourceTests {
         this.mockMvc.perform(get("/api/articles?page=0&size=1"))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1));
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[*].title",isA(ArrayList.class)))
+                .andExpect(jsonPath("$[*].title",contains("Title1")));;
     }
 
     private Article createArticle(String title, String description, String body) {
@@ -305,7 +313,9 @@ class ArticleResourceTests {
         this.mockMvc.perform(get("/api/articles?status=DRAFT"))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2));
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[*].title",isA(ArrayList.class)))
+                .andExpect(jsonPath("$[*].title",contains("Title1","Title2")));
     }
 
 
@@ -355,14 +365,23 @@ class ArticleResourceTests {
                 new Article.Builder().withBody("body")
                         .withTitle("title")
                         .withDescription("Desc")
-                        .withTags(new HashSet<>(Arrays.asList("t1", "t2", "t3", "t1",
-                                "t1")))
+                        .withTags(new HashSet<>(Arrays.asList("t1", "t2", "t3")))
                         .build();
-        Article saved = articleRepository.save(article);
+        Article article2 =
+                new Article.Builder().withBody("body")
+                        .withTitle("title")
+                        .withDescription("Desc")
+                        .withTags(new HashSet<>(Collections.singletonList("t1")))
+                        .build();
+        this.articleRepository.saveAll(Arrays.asList(article,article2));
         this.mockMvc.perform(get("/api/articles/tags"))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(3));
+                .andExpect(jsonPath("$.length()").value(3))
+                .andExpect(jsonPath("$[*].tag").isArray())
+                .andExpect(jsonPath("$[*].occurrence").isArray())
+                .andExpect(jsonPath("$[*].tag",containsInAnyOrder("t1","t2","t3")))
+               .andExpect(jsonPath("$[*].occurrence",containsInAnyOrder(2,1,1)));
 
     }
 
@@ -389,7 +408,7 @@ class ArticleResourceTests {
         article.favourite();
         Article saved = articleRepository.save(article);
         String id = String.format("%s-%s", saved.getSlug(), saved.getId());
-        this.mockMvc.perform(delete("/api/articles/{slug_id}/unfavourite", id))
+        this.mockMvc.perform(delete("/api/articles/{slug_id}/favourite", id))
                 .andDo(print())
                 .andExpect(status().isNoContent());
         Optional<Article> articleFavouritesCount =
@@ -407,12 +426,12 @@ class ArticleResourceTests {
                 .withBody("body")
                 .withDescription("desc")
                 .withTitle("title")
-                .withFavorited(true)
-                .withFavoritesCount(2L)
+                .withFavourited(true)
+                .withFavouritesCount(2L)
                 .build();
         Article saved = articleRepository.save(article);
         String id = String.format("%s-%s", saved.getSlug(), saved.getId());
-        this.mockMvc.perform(delete("/api/articles/{slug_id}/unfavourite", id))
+        this.mockMvc.perform(delete("/api/articles/{slug_id}/favourite", id))
                 .andDo(print())
                 .andExpect(status().isNoContent());
         Optional<Article> articleFavouritesCount =

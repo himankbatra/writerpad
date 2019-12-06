@@ -105,8 +105,8 @@ public class Article {
         tags = builder.tags;
         featuredImageUrl = builder.featuredImageUrl;
         updatedAt = builder.updatedAt;
-        favourited = builder.favorited;
-        favouritesCount = builder.favoritesCount;
+        favourited = builder.favourited;
+        favouritesCount = builder.favouritesCount;
         status = builder.status;
     }
 
@@ -187,8 +187,8 @@ public class Article {
         private Set<String> tags;
         private String featuredImageUrl;
         private Date updatedAt;
-        private boolean favorited;
-        private long favoritesCount;
+        private boolean favourited;
+        private long favouritesCount;
         private ArticleStatus status = ArticleStatus.DRAFT;
 
         public Builder() {
@@ -226,13 +226,13 @@ public class Article {
             return this;
         }
 
-        public Builder withFavorited(boolean val) {
-            favorited = val;
+        public Builder withFavourited(boolean val) {
+            favourited = val;
             return this;
         }
 
-        public Builder withFavoritesCount(long val) {
-            favoritesCount = val;
+        public Builder withFavouritesCount(long val) {
+            favouritesCount = val;
             return this;
         }
 

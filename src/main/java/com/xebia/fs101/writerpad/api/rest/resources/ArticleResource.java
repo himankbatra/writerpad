@@ -131,7 +131,7 @@ public class ArticleResource {
     }
 
     @PutMapping(path = "/{slug_id}/favourite")
-    public ResponseEntity<Void> setFavourite(@PathVariable(name = "slug_id") String slugId) {
+    public ResponseEntity<Void> favourite(@PathVariable(name = "slug_id") String slugId) {
 
         this.articleService.favourite(slugId);
         return ResponseEntity.noContent().build();
@@ -139,8 +139,8 @@ public class ArticleResource {
     }
 
 
-    @DeleteMapping(path = "/{slug_id}/unfavourite")
-    public ResponseEntity<Void> setUnFavourite(@PathVariable(name = "slug_id") String slugId) {
+    @DeleteMapping(path = "/{slug_id}/favourite")
+    public ResponseEntity<Void> unFavourite(@PathVariable(name = "slug_id") String slugId) {
         this.articleService.unFavourite(slugId);
         return ResponseEntity.noContent().build();
 

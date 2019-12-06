@@ -20,7 +20,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.Arrays;
 import java.util.UUID;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -29,7 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
- class CommentResourceTests {
+class CommentResourceTests {
 
     @Autowired
     private MockMvc mockMvc;
@@ -75,7 +77,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
                 .andExpect(jsonPath("$.updatedAt").isNotEmpty())
                 .andExpect(jsonPath("$.body").isNotEmpty())
                 .andExpect(jsonPath("$.body").value("Awesome Article"))
-                .andExpect(jsonPath("$.ipAddress").isNotEmpty());
+                .andExpect(jsonPath("$.ipAddress").isNotEmpty())
+                .andExpect(jsonPath("$.article").hasJsonPath());
     }
 
     @Test
@@ -109,10 +112,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
                 .build();
         System.out.println(articleRequest.toArticle());
         Article savedArticle = articleRepository.save(articleRequest.toArticle());
-        String slugId = String.format("%s_%s", savedArticle.getSlug(), savedArticle.getId());
-        CommentRequest commentRequest=new CommentRequest("semen");
-        String json=objectMapper.writeValueAsString(commentRequest);
-        mockMvc.perform(post("/api/articles/{slug_id}/comments",slugId)
+        String slugId = String.format("%s_%s", savedArticle.getSlug(),
+                savedArticle.getId());
+        CommentRequest commentRequest = new CommentRequest("semen");
+        String json = objectMapper.writeValueAsString(commentRequest);
+        mockMvc.perform(post("/api/articles/{slug_id}/comments", slugId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(json))
                 .andDo(print())
@@ -132,7 +136,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         Comment comment2 = new Comment("Comment2", "10.1.1.1", article);
         Comment comment3 = new Comment("Comment3", "10.1.1.1", article);
         commentRepository.saveAll(Arrays.asList(comment1, comment2, comment3));
-        this.mockMvc.perform(get("/api/articles/{slug_id}/comments/", id))
+        this.mockMvc.perform(get("/api/articles/{slug_id}/comments", id))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(3));
@@ -150,7 +154,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         Comment comment = new Comment("Comment1", "10.1.1.1", saved);
         Comment savedComment = commentRepository.save(comment);
         Long commentId = savedComment.getId();
-        mockMvc.perform(delete("/api/articles/{slug_id}/comments/{comment_id}", id, commentId))
+        mockMvc.perform(delete("/api/articles/{slug_id}/comments/{comment_id}", id,
+                commentId))
                 .andDo(print())
                 .andExpect(status().isNoContent());
     }
@@ -167,7 +172,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         Comment comment = new Comment("Comment1", "10.1.1.1", saved);
         Comment savedComment = commentRepository.save(comment);
         Long commentId = savedComment.getId();
-        mockMvc.perform(delete("/api/articles/{slug_id}/comments/{comment_id}", id, commentId))
+        mockMvc.perform(delete("/api/articles/{slug_id}/comments/{comment_id}", id,
+                commentId))
                 .andDo(print())
                 .andExpect(status().isNotFound());
     }
