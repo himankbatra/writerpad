@@ -402,7 +402,7 @@ class ArticleResourceTests {
 
 
     @Test
-    void should_get_favourite_count_as_1_when_favourites_count_is_2() throws Exception {
+    void should_get_favourite_count_as_1_when_i_try_to_unfavourite_an_article_with_favourite_count_2() throws Exception {
         Article article = new Article.Builder()
                 .withBody("body")
                 .withDescription("desc")
