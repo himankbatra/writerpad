@@ -87,8 +87,8 @@ public class Article {
         if (copyFrom.getTags().size() > 0) {
             this.tags = copyFrom.getTags();
         }
-        if (Objects.nonNull(copyFrom.getStatus())) {
-            this.status = copyFrom.getStatus();
+        if (Objects.nonNull(copyFrom.getFeaturedImageUrl())) {
+            this.featuredImageUrl = copyFrom.getFeaturedImageUrl();
         }
 
         this.updatedAt = new Date();
