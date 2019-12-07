@@ -258,8 +258,8 @@ public class Article {
                 + ", featuredImageUrl='" + featuredImageUrl + '\''
                 + ", createdAt=" + createdAt
                 + ", updatedAt=" + updatedAt
-                + ", isFavorite=" + favourited
-                + ", favoriteCount=" + favouritesCount
+                + ", isFavourite=" + favourited
+                + ", favouriteCount=" + favouritesCount
                 + ", status=" + status
                 + '}';
     }
