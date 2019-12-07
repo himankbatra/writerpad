@@ -14,7 +14,7 @@ class ReadingTimeServiceTests {
     void should_get_reading_time_when_i_provide_valid_data() {
         ReadingTimeService readingTimeService = new ReadingTimeService(3);
         ReadingTime readingTime = readingTimeService.calculateReadingTime("a b c");
-        assertThat(readingTime).isEqualToComparingFieldByField(new ReadingTime(0, 9));
+        assertThat(readingTime).isEqualToComparingFieldByField(new ReadingTime(0, 1));
 
     }
 

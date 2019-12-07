@@ -70,11 +70,12 @@ public class ArticleResource {
     @PostMapping(path = "/{slug_id}/publish")
     public ResponseEntity<Article> publish(@PathVariable("slug_id") final String slugId) {
         boolean publish = this.articleService.publish(slugId);
+        if (!publish) {
+            return ResponseEntity.badRequest().build();
+        }
         this.mailService.sendEmail("publish article"
                 , "Publishing an article with Article Id " + toUuid(slugId));
-        return publish
-                ? ResponseEntity.status(HttpStatus.NO_CONTENT).build()
-                : ResponseEntity.badRequest().build();
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
 

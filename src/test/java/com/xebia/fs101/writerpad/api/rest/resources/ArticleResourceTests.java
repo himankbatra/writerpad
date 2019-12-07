@@ -66,7 +66,7 @@ class ArticleResourceTests {
     }
 
     @Test
-    public void mock_mvc_should_not_be_null() {
+    void mock_mvc_should_not_be_null() {
         assertThat(mockMvc).isNotNull();
     }
 
@@ -173,7 +173,7 @@ class ArticleResourceTests {
 
 
     @Test
-    public void should_update_article() throws Exception {
+    void should_update_article() throws Exception {
 
 
         Article article = new Article.Builder()
@@ -212,7 +212,7 @@ class ArticleResourceTests {
     }
 
     @Test
-    public void should_get_article_when_i_provide_valid_id() throws Exception {
+    void should_get_article_when_i_provide_valid_id() throws Exception {
 
         Article article = new Article.Builder()
                 .withBody("spring boot")
@@ -253,8 +253,9 @@ class ArticleResourceTests {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(3))
-                .andExpect(jsonPath("$[*].title",isA(ArrayList.class)))
-                .andExpect(jsonPath("$[*].title",contains("Title1","Title2","Title3")));;
+                .andExpect(jsonPath("$[*].title", isA(ArrayList.class)))
+                .andExpect(jsonPath("$[*].title", contains("Title1", "Title2",
+                        "Title3")));
     }
 
     @Test
@@ -267,8 +268,8 @@ class ArticleResourceTests {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[*].title",isA(ArrayList.class)))
-                .andExpect(jsonPath("$[*].title",contains("Title1")));;
+                .andExpect(jsonPath("$[*].title", isA(ArrayList.class)))
+                .andExpect(jsonPath("$[*].title", contains("Title1")));
     }
 
     private Article createArticle(String title, String description, String body) {
@@ -314,8 +315,8 @@ class ArticleResourceTests {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[*].title",isA(ArrayList.class)))
-                .andExpect(jsonPath("$[*].title",contains("Title1","Title2")));
+                .andExpect(jsonPath("$[*].title", isA(ArrayList.class)))
+                .andExpect(jsonPath("$[*].title", contains("Title1", "Title2")));
     }
 
 
@@ -355,7 +356,7 @@ class ArticleResourceTests {
                 .andExpect(jsonPath("$.articleId").value(id))
                 .andExpect(jsonPath("$.readingTime").hasJsonPath())
                 .andExpect(jsonPath("$..minutes").value(0))
-                .andExpect(jsonPath("$..seconds").value(12));
+                .andExpect(jsonPath("$..seconds").value(1));
 
     }
 
@@ -373,15 +374,15 @@ class ArticleResourceTests {
                         .withDescription("Desc")
                         .withTags(new HashSet<>(Collections.singletonList("t1")))
                         .build();
-        this.articleRepository.saveAll(Arrays.asList(article,article2));
+        this.articleRepository.saveAll(Arrays.asList(article, article2));
         this.mockMvc.perform(get("/api/articles/tags"))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(3))
                 .andExpect(jsonPath("$[*].tag").isArray())
                 .andExpect(jsonPath("$[*].occurrence").isArray())
-                .andExpect(jsonPath("$[*].tag",containsInAnyOrder("t1","t2","t3")))
-               .andExpect(jsonPath("$[*].occurrence",containsInAnyOrder(2,1,1)));
+                .andExpect(jsonPath("$[*].tag", containsInAnyOrder("t1", "t2", "t3")))
+                .andExpect(jsonPath("$[*].occurrence", containsInAnyOrder(2, 1, 1)));
 
     }
 
