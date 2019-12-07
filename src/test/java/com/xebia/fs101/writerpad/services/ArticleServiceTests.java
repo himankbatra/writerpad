@@ -46,6 +46,13 @@ class ArticleServiceTests {
                 .withDescription("desc").build();
         articleService.save(article);
         verify(articleRepository).save(article);
+        Article articleWithStatusDraft=
+                new Article.Builder().withBody("body")
+                        .withTitle("title")
+                        .withDescription("desc")
+                        .withStatus(ArticleStatus.DRAFT)
+                        .build();
+        verify(articleRepository).save(refEq(articleWithStatusDraft,"createdAt"));
         verifyNoMoreInteractions(articleRepository);
     }
 
