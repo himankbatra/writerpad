@@ -479,5 +479,54 @@ class ArticleResourceTests {
 
     }
 
+    @Test
+    void should_not_delete_an_article_when_the_user_is_not_owner_of_article() throws Exception {
+        UserRequest userRequest1 =
+                new UserRequest.Builder()
+                        .withUsername("abc1").withPassword("abc1@123").withEmail("abc1@123.com").build();
+        User user1 = userRequest1.toUser(passwordEncoder);
+        userRepository.save(user1);
+        Article article = new Article.Builder()
+                .withTitle("spring")
+                .withBody("appl")
+                .withDescription("boot")
+                .build();
+        article.setUser(user);
+        Article savedArticle = articleRepository.save(article);
+        String id = String.format("%s-%s", savedArticle.getSlug(), savedArticle.getId());
+        this.mockMvc.perform(delete("/api/articles/{slug_id}", id)
+                .with(httpBasic("abc1", "abc1@123")))
+                .andDo(print())
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void should_not_update_object_when_user_not_the_owner_of_same_article() throws Exception {
+        ArticleRequest updateRequest = new ArticleRequest.Builder()
+                .withBody("body")
+                .withTitle("title")
+                .withDescription("desc")
+                .withTags(new HashSet<>(Arrays.asList("tags", "hello"))).build();
+        Article article = new Article.Builder()
+                .withTitle("DEF")
+                .withDescription("Desc")
+                .withBody("DEF")
+                .build();
+        article.setUser(user);
+        Article saved = articleRepository.save(article);
+        String json = objectMapper.writeValueAsString(updateRequest);
+        String id = String.format("%s-%s", saved.getSlug(), saved.getId());
+        UserRequest userRequest1 =
+                new UserRequest.Builder()
+                        .withUsername("abc1").withPassword("abc1@123").withEmail("abc1@123.com").build();
+        User user1 = userRequest1.toUser(passwordEncoder);
+        userRepository.save(user1);
+        this.mockMvc.perform(patch("/api/articles/{slug_uuid}", id)
+                .contentType(MediaType.APPLICATION_JSON).content(json)
+                .with(httpBasic("abc1", "abc1@123")))
+                .andDo(print())
+                .andExpect(status().isForbidden());
+    }
+
 
 }

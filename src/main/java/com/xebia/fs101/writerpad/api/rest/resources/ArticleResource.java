@@ -5,9 +5,9 @@ import com.xebia.fs101.writerpad.api.rest.representations.ArticleResponse;
 import com.xebia.fs101.writerpad.api.rest.representations.ReadingTimeResponse;
 import com.xebia.fs101.writerpad.api.rest.representations.TagResponse;
 import com.xebia.fs101.writerpad.domain.Article;
-import com.xebia.fs101.writerpad.services.helpers.ReadingTime;
 import com.xebia.fs101.writerpad.domain.User;
 import com.xebia.fs101.writerpad.services.ArticleService;
+import com.xebia.fs101.writerpad.services.helpers.ReadingTime;
 import com.xebia.fs101.writerpad.services.helpers.ReadingTimeService;
 import com.xebia.fs101.writerpad.services.mail.MailService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,10 +66,11 @@ public class ArticleResource {
 
 
     @PatchMapping(path = "/{slug_id}")
-    public ResponseEntity<Article> update(@RequestBody ArticleRequest articleRequest,
+    public ResponseEntity<Article> update(@AuthenticationPrincipal User user,
+                                          @RequestBody ArticleRequest articleRequest,
                                           @PathVariable("slug_id") final String slugId) {
         Article updatedArticle =
-                this.articleService.update(slugId, articleRequest.toArticle());
+                this.articleService.update(slugId, articleRequest.toArticle(), user);
         return ResponseEntity.ok(updatedArticle);
 
     }
@@ -105,8 +106,9 @@ public class ArticleResource {
     }
 
     @DeleteMapping(path = "/{slug_id}")
-    public ResponseEntity<Void> delete(@PathVariable("slug_id") final String slugId) {
-        this.articleService.delete(slugId);
+    public ResponseEntity<Void> delete(@AuthenticationPrincipal User user,
+                                       @PathVariable("slug_id") final String slugId) {
+        this.articleService.delete(slugId, user);
         return ResponseEntity.noContent().build();
 
     }

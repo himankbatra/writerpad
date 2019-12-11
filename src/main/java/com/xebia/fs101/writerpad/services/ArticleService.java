@@ -1,10 +1,11 @@
 package com.xebia.fs101.writerpad.services;
 
 
-import com.xebia.fs101.writerpad.api.rest.exceptions.ArticleNotFoundException;
 import com.xebia.fs101.writerpad.domain.Article;
 import com.xebia.fs101.writerpad.domain.ArticleStatus;
 import com.xebia.fs101.writerpad.domain.User;
+import com.xebia.fs101.writerpad.exceptions.ArticleNotFoundException;
+import com.xebia.fs101.writerpad.exceptions.ForbiddenOperationException;
 import com.xebia.fs101.writerpad.repositories.ArticleRepository;
 import com.xebia.fs101.writerpad.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,9 +46,15 @@ public class ArticleService {
 
     }
 
-    public Article update(String slugId, Article copyFrom) {
+    public Article update(String slugId, Article copyFrom, User user) {
         Article article = this.findById(slugId);
+        Optional<User> foundUser = this.userRepository.findById(user.getUserid());
+        if (!Objects.equals(article.getUser(), foundUser.get())) {
+            throw new ForbiddenOperationException("You are not allowed to "
+                    + "perform this operation");
+        }
         return this.articleRepository.save(article.update(copyFrom));
+
     }
 
 
@@ -59,9 +66,14 @@ public class ArticleService {
         return this.articleRepository.findAll(pageable).getContent();
     }
 
-    public void delete(String slugId) {
+    public void delete(String slugId, User user) {
         UUID id = toUuid(slugId);
-        this.findById(slugId);
+        Article article = this.findById(slugId);
+        Optional<User> foundUser = this.userRepository.findById(user.getUserid());
+        if (!Objects.equals(article.getUser(), foundUser.get())) {
+            throw new ForbiddenOperationException("You are not allowed to "
+                    + "perform this operation");
+        }
         this.articleRepository.deleteById(id);
 
     }
