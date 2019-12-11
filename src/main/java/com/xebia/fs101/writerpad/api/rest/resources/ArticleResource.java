@@ -7,6 +7,7 @@ import com.xebia.fs101.writerpad.api.rest.representations.TagResponse;
 import com.xebia.fs101.writerpad.domain.Article;
 import com.xebia.fs101.writerpad.domain.User;
 import com.xebia.fs101.writerpad.services.ArticleService;
+import com.xebia.fs101.writerpad.services.helpers.ImageGeneratorService;
 import com.xebia.fs101.writerpad.services.helpers.ReadingTime;
 import com.xebia.fs101.writerpad.services.helpers.ReadingTimeService;
 import com.xebia.fs101.writerpad.services.mail.MailService;
@@ -31,6 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static com.xebia.fs101.writerpad.utils.StringUtils.toUuid;
@@ -48,19 +50,24 @@ public class ArticleResource {
     @Autowired
     private ReadingTimeService readingTimeService;
 
+    @Autowired
+    private ImageGeneratorService imageGeneratorService;
+
     @PostMapping
     public ResponseEntity<ArticleResponse> create(@AuthenticationPrincipal User user,
                                                   @Valid @RequestBody
                                                           ArticleRequest articleRequest) {
-        try {
-            Article savedArticle = this.articleService.save(articleRequest.toArticle(),
-                    user);
-            return new ResponseEntity<>(ArticleResponse.from(savedArticle),
-                    HttpStatus.CREATED);
 
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        String featuredImageUrl = Objects.isNull(articleRequest.getFeaturedImageUrl())
+                ? imageGeneratorService.generateRandomImage()
+                : articleRequest.getFeaturedImageUrl();
+
+        Article savedArticle =
+                this.articleService.save(articleRequest
+                                .toArticle(featuredImageUrl),
+                        user);
+        return new ResponseEntity<>(ArticleResponse.from(savedArticle),
+                HttpStatus.CREATED);
 
     }
 
@@ -69,8 +76,12 @@ public class ArticleResource {
     public ResponseEntity<Article> update(@AuthenticationPrincipal User user,
                                           @RequestBody ArticleRequest articleRequest,
                                           @PathVariable("slug_id") final String slugId) {
+        String featuredImageUrl = Objects.isNull(articleRequest.getFeaturedImageUrl())
+                ? imageGeneratorService.generateRandomImage()
+                : articleRequest.getFeaturedImageUrl();
         Article updatedArticle =
-                this.articleService.update(slugId, articleRequest.toArticle(), user);
+                this.articleService.update(slugId,
+                        articleRequest.toArticle(featuredImageUrl), user);
         return ResponseEntity.ok(updatedArticle);
 
     }

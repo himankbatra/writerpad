@@ -1,12 +1,12 @@
 package com.xebia.fs101.writerpad.services;
 
-import com.xebia.fs101.writerpad.api.rest.representations.UserRequest;
 import com.xebia.fs101.writerpad.domain.Article;
 import com.xebia.fs101.writerpad.domain.ArticleStatus;
 import com.xebia.fs101.writerpad.domain.User;
 import com.xebia.fs101.writerpad.exceptions.ForbiddenOperationException;
 import com.xebia.fs101.writerpad.repositories.ArticleRepository;
 import com.xebia.fs101.writerpad.repositories.UserRepository;
+import com.xebia.fs101.writerpad.services.helpers.PlagiarismCheckerService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -42,15 +42,19 @@ class ArticleServiceTests {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private PlagiarismCheckerService plagiarismCheckerService;
+
     @InjectMocks
     private ArticleService articleService;
-
-
 
 
     @Test
     void should_save_the_article() {
         User user = new User();
+        Article savedArticle = new Article.Builder().withBody("abc").build();
+        when(articleRepository.findAll()).thenReturn(Collections.singletonList(savedArticle));
+        when(plagiarismCheckerService.isPlagiarism(any(), any())).thenReturn(false);
         when(userRepository.findById(anyLong())).thenReturn(Optional.of(user));
         when(articleRepository.save(any())).thenReturn(new Article());
         Article article = new Article.Builder()
@@ -59,6 +63,8 @@ class ArticleServiceTests {
                 .withDescription("desc").build();
         article.setUser(user);
         articleService.save(article, user);
+        verify(articleRepository).findAll();
+        //verify(plagiarismCheckerService).isPlagiarism(article.getBody(),Stream.of("abc"));
         verify(userRepository).findById(user.getUserid());
         verify(articleRepository).save(article);
         Article articleWithStatusDraft =
@@ -90,6 +96,8 @@ class ArticleServiceTests {
                 .withTitle("title")
                 .build();
         article.setUser(user);
+        when(articleRepository.findAll()).thenReturn(Collections.singletonList(article));
+        when(plagiarismCheckerService.isPlagiarism(any(), any())).thenReturn(false);
         when(articleRepository.findById(any())).thenReturn(Optional.of(article));
         when(articleRepository.save(any())).thenReturn(new Article());
         when(userRepository.findById(anyLong())).thenReturn(Optional.of(user));
@@ -97,7 +105,8 @@ class ArticleServiceTests {
         Article articleTobeUpdated = new Article.Builder()
                 .withBody("updated body")
                 .build();
-        articleService.update("slug-" + id, articleTobeUpdated,user);
+        articleService.update("slug-" + id, articleTobeUpdated, user);
+        verify(articleRepository).findAll();
         verify(articleRepository).findById(id);
         Article expectedArticle =
                 new Article.Builder().withBody("updated body")
@@ -129,7 +138,7 @@ class ArticleServiceTests {
         article.setUser(user);
         when(articleRepository.findById(any())).thenReturn(Optional.of(article));
         UUID id = UUID.randomUUID();
-        this.articleService.delete("slug-" + id,user);
+        this.articleService.delete("slug-" + id, user);
         verify(articleRepository, times(1)).findById(id);
         verify(userRepository).findById(user.getUserid());
         verify(articleRepository).deleteById(id);
@@ -209,7 +218,7 @@ class ArticleServiceTests {
 
 
     @Test
-    void should_unfavourite_an_article_when_i_provide_valid_data()  {
+    void should_unfavourite_an_article_when_i_provide_valid_data() {
         Optional<Article> optionalArticle = Optional.of(new Article.Builder()
                 .withFavourited(true).withFavouritesCount(1L).build());
         when(articleRepository.findById(any())).thenReturn(optionalArticle);
@@ -244,7 +253,7 @@ class ArticleServiceTests {
 
     @Test
     void should_not_update_the_article_if_user_is_not_owner() {
-        User user1=new User.Builder().withUsername("test").build();
+        User user1 = new User.Builder().withUsername("test").build();
         User user = new User();
         Article article = new Article.Builder()
                 .withBody("body")
@@ -252,6 +261,8 @@ class ArticleServiceTests {
                 .withTitle("title")
                 .build();
         article.setUser(user);
+        when(articleRepository.findAll()).thenReturn(Collections.singletonList(article));
+        when(plagiarismCheckerService.isPlagiarism(any(), any())).thenReturn(false);
         when(articleRepository.findById(any())).thenReturn(Optional.of(article));
         when(userRepository.findById(any())).thenReturn(Optional.of(user1));
         UUID id = UUID.randomUUID();
@@ -259,12 +270,14 @@ class ArticleServiceTests {
                 .withBody("updated body")
                 .build();
         articleTobeUpdated.setUser(user);
-
         ForbiddenOperationException thrown =
                 assertThrows(ForbiddenOperationException.class,
-                        () ->  articleService.update("slug-" + id, articleTobeUpdated, user),
+                        () -> articleService.update("slug-" + id, articleTobeUpdated,
+                                user),
                         "Expected doThing() to throw, but it didn't");
-        assertTrue(thrown.getMessage().contains("You are not allowed to perform this operation"));
+        assertTrue(thrown.getMessage().contains("You are not allowed to perform this " +
+                "operation"));
+        verify(articleRepository).findAll();
         verify(articleRepository).findById(id);
         verify(userRepository).findById(user.getUserid());
         verifyNoMoreInteractions(articleRepository);
@@ -274,7 +287,7 @@ class ArticleServiceTests {
 
     @Test
     void should_not_delete_the_article_if_user_is_not_owner() {
-        User user1=new User.Builder().withUsername("test").build();
+        User user1 = new User.Builder().withUsername("test").build();
         User user = new User();
         when(userRepository.findById(anyLong())).thenReturn(Optional.of(user1));
         Article article = new Article();
@@ -283,9 +296,10 @@ class ArticleServiceTests {
         UUID id = UUID.randomUUID();
         ForbiddenOperationException thrown =
                 assertThrows(ForbiddenOperationException.class,
-                        () ->  articleService.delete("slug-" + id, user),
+                        () -> articleService.delete("slug-" + id, user),
                         "Expected doThing() to throw, but it didn't");
-        assertTrue(thrown.getMessage().contains("You are not allowed to perform this operation"));
+        assertTrue(thrown.getMessage().contains("You are not allowed to perform this " +
+                "operation"));
         verify(articleRepository).findById(id);
         verify(userRepository).findById(user.getUserid());
         verifyNoMoreInteractions(articleRepository);

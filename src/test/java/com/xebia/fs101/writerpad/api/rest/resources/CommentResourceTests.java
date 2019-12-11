@@ -19,7 +19,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Arrays;
@@ -136,7 +135,8 @@ class CommentResourceTests {
                 .withTitle("title")
                 .withDescription("description")
                 .build();
-        Article article = articleRequest.toArticle();
+        String featuredImageUrl="http://bit.ly/2ONnxU7";
+        Article article = articleRequest.toArticle(featuredImageUrl);
         article.setUser(user);
         Article savedArticle = articleRepository.save(article);
         String slugId = String.format("%s_%s", savedArticle.getSlug(),

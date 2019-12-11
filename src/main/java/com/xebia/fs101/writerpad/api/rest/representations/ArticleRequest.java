@@ -54,13 +54,13 @@ public class ArticleRequest {
         return featuredImageUrl;
     }
 
-    public Article toArticle() {
+    public Article toArticle(String featuredImageUrl) {
         return new Article.Builder().withTitle(this.title)
                 .withDescription(this.description)
                 .withBody(this.body)
                 .withTags(this.getTags().stream().map(StringUtils::slugify)
                         .collect(Collectors.toSet()))
-                .withFeaturedImageUrl(this.featuredImageUrl)
+                .withFeaturedImageUrl(featuredImageUrl)
                 .withUpdatedAt()
                 .build();
     }

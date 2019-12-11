@@ -5,9 +5,11 @@ import com.xebia.fs101.writerpad.domain.Article;
 import com.xebia.fs101.writerpad.domain.ArticleStatus;
 import com.xebia.fs101.writerpad.domain.User;
 import com.xebia.fs101.writerpad.exceptions.ArticleNotFoundException;
+import com.xebia.fs101.writerpad.exceptions.DuplicateArticleFoundException;
 import com.xebia.fs101.writerpad.exceptions.ForbiddenOperationException;
 import com.xebia.fs101.writerpad.repositories.ArticleRepository;
 import com.xebia.fs101.writerpad.repositories.UserRepository;
+import com.xebia.fs101.writerpad.services.helpers.PlagiarismCheckerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -19,6 +21,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.xebia.fs101.writerpad.utils.StringUtils.toUuid;
 
@@ -31,7 +34,15 @@ public class ArticleService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private PlagiarismCheckerService plagiarismCheckerService;
+
     public Article save(Article article, User user) {
+        Stream<String> targetStream =
+                this.articleRepository.findAll().parallelStream().map(Article::getBody);
+        if (this.plagiarismCheckerService.isPlagiarism(article.getBody(), targetStream)) {
+            throw new DuplicateArticleFoundException("Same article found !!!");
+        }
         Optional<User> foundUser = this.userRepository.findById(user.getUserid());
         article.setUser(foundUser.get());
         return this.articleRepository.save(article);
@@ -47,7 +58,17 @@ public class ArticleService {
     }
 
     public Article update(String slugId, Article copyFrom, User user) {
+
         Article article = this.findById(slugId);
+
+        Stream<String> targetStream =
+                this.articleRepository.findAll().parallelStream()
+                        .filter(a -> a.getId() != article.getId()).map(Article::getBody);
+        if (this.plagiarismCheckerService.isPlagiarism(copyFrom.getBody(),
+                targetStream)) {
+            throw new DuplicateArticleFoundException("Same article found !!!");
+        }
+
         Optional<User> foundUser = this.userRepository.findById(user.getUserid());
         if (!Objects.equals(article.getUser(), foundUser.get())) {
             throw new ForbiddenOperationException("You are not allowed to "

@@ -13,12 +13,13 @@ public class ArticleResponse {
     private String description;
     private String body;
     private Set<String> tags;
-    private Date createdAt = new Date();
+    private Date createdAt;
     private Date updatedAt;
     private boolean favourited;
     private long favouritesCount;
     private UserResponse author;
     private ArticleStatus status;
+    private String featuredImageUrl;
 
     private ArticleResponse(Builder builder) {
         id = builder.id;
@@ -33,6 +34,7 @@ public class ArticleResponse {
         favouritesCount = builder.favouritesCount;
         author = builder.author;
         status = builder.status;
+        featuredImageUrl = builder.featuredImageUrl;
     }
 
     public static ArticleResponse from(Article article) {
@@ -49,6 +51,7 @@ public class ArticleResponse {
                 .withFavouritesCount(article.getFavouritesCount())
                 .withFavourited(article.isFavourited())
                 .withStatus(article.getStatus())
+                .withFeaturedImageUrl(article.getFeaturedImageUrl())
                 .build();
     }
 
@@ -112,6 +115,10 @@ public class ArticleResponse {
         return status;
     }
 
+    public String getFeaturedImageUrl() {
+        return featuredImageUrl;
+    }
+
     public static final class Builder {
         private String id;
         private String title;
@@ -124,7 +131,8 @@ public class ArticleResponse {
         private boolean favourited;
         private long favouritesCount;
         private UserResponse author;
-        public ArticleStatus status;
+        private ArticleStatus status;
+        private String featuredImageUrl;
 
         public Builder() {
         }
@@ -188,6 +196,12 @@ public class ArticleResponse {
             status = val;
             return this;
         }
+
+        public Builder withFeaturedImageUrl(String val) {
+            featuredImageUrl = val;
+            return this;
+        }
+
 
         public ArticleResponse build() {
             return new ArticleResponse(this);
