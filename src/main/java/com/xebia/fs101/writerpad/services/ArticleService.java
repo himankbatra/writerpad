@@ -4,7 +4,9 @@ package com.xebia.fs101.writerpad.services;
 import com.xebia.fs101.writerpad.api.rest.exceptions.ArticleNotFoundException;
 import com.xebia.fs101.writerpad.domain.Article;
 import com.xebia.fs101.writerpad.domain.ArticleStatus;
+import com.xebia.fs101.writerpad.domain.User;
 import com.xebia.fs101.writerpad.repositories.ArticleRepository;
+import com.xebia.fs101.writerpad.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -13,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -24,16 +27,22 @@ public class ArticleService {
     @Autowired
     private ArticleRepository articleRepository;
 
+    @Autowired
+    private UserRepository userRepository;
 
-    public Article save(Article article) {
+    public Article save(Article article, User user) {
+        Optional<User> foundUser = this.userRepository.findById(user.getUserid());
+        article.setUser(foundUser.get());
         return this.articleRepository.save(article);
+
     }
 
     public Article findById(String slugUuid) {
         UUID id = toUuid(slugUuid);
         return this.articleRepository.findById(id)
-                .orElseThrow(() -> new ArticleNotFoundException("Article with id " + id
+                .orElseThrow(() -> new ArticleNotFoundException("Article id : " + id
                         + " does not exist !!! "));
+
     }
 
     public Article update(String slugId, Article copyFrom) {
@@ -54,7 +63,6 @@ public class ArticleService {
         UUID id = toUuid(slugId);
         this.findById(slugId);
         this.articleRepository.deleteById(id);
-
 
     }
 
@@ -79,14 +87,14 @@ public class ArticleService {
     public void favourite(String slugId) {
         Article article = findById(slugId);
         article.favourite();
-        save(article);
+        this.articleRepository.save(article);
     }
 
     public void unFavourite(String slugId) {
         Article article = findById(slugId);
         if (article.getFavouritesCount() >= 0) {
             article.unFavourite();
-            save(article);
+            this.articleRepository.save(article);
         }
     }
 }

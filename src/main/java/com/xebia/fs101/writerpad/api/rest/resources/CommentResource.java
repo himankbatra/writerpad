@@ -5,7 +5,7 @@ import com.xebia.fs101.writerpad.domain.Article;
 import com.xebia.fs101.writerpad.domain.Comment;
 import com.xebia.fs101.writerpad.services.ArticleService;
 import com.xebia.fs101.writerpad.services.CommentService;
-import com.xebia.fs101.writerpad.services.SpamChecker;
+import com.xebia.fs101.writerpad.services.helpers.SpamChecker;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

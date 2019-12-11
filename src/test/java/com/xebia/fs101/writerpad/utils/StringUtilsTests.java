@@ -24,8 +24,9 @@ class StringUtilsTests {
 
 
     @Test
-     void should_extract_uuid() {
-        UUID slugUuid = StringUtils.toUuid("how-to-learn-spring-boot-03bc41f1-2f62-4aba-999e-456d0975300c");
+    void should_extract_uuid() {
+        UUID slugUuid = StringUtils.toUuid("how-to-learn-spring-boot-03bc41f1-2f62-4aba" +
+                "-999e-456d0975300c");
         assertEquals("03bc41f1-2f62-4aba-999e-456d0975300c", slugUuid.toString());
     }
 

@@ -2,7 +2,9 @@ package com.xebia.fs101.writerpad.services;
 
 import com.xebia.fs101.writerpad.domain.Article;
 import com.xebia.fs101.writerpad.domain.ArticleStatus;
+import com.xebia.fs101.writerpad.domain.User;
 import com.xebia.fs101.writerpad.repositories.ArticleRepository;
+import com.xebia.fs101.writerpad.repositories.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -21,6 +23,7 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.refEq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -36,23 +39,31 @@ class ArticleServiceTests {
     @InjectMocks
     private ArticleService articleService;
 
+    @Mock
+    private UserRepository userRepository;
+
 
     @Test
     void should_save_the_article() {
+        User user = new User();
+        when(userRepository.findById(anyLong())).thenReturn(Optional.of(user));
         when(articleRepository.save(any())).thenReturn(new Article());
         Article article = new Article.Builder()
                 .withBody("body")
                 .withTitle("title")
                 .withDescription("desc").build();
-        articleService.save(article);
+        article.setUser(user);
+        articleService.save(article, user);
+        verify(userRepository).findById(user.getUserid());
         verify(articleRepository).save(article);
-        Article articleWithStatusDraft=
+        Article articleWithStatusDraft =
                 new Article.Builder().withBody("body")
                         .withTitle("title")
                         .withDescription("desc")
                         .withStatus(ArticleStatus.DRAFT)
                         .build();
-        verify(articleRepository).save(refEq(articleWithStatusDraft,"createdAt"));
+        articleWithStatusDraft.setUser(user);
+        verify(articleRepository).save(refEq(articleWithStatusDraft, "createdAt"));
         verifyNoMoreInteractions(articleRepository);
     }
 

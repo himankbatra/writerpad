@@ -32,11 +32,9 @@ public class Comment {
 
     private String ipAddress;
 
-    // @JsonIgnore
     @JsonManagedReference
     @ManyToOne
     private Article article;
-
 
     public Comment(String body, String ipAddress, Article article) {
         this.body = body;

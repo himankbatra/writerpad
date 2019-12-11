@@ -1,4 +1,4 @@
-package com.xebia.fs101.writerpad.services;
+package com.xebia.fs101.writerpad.services.helpers;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

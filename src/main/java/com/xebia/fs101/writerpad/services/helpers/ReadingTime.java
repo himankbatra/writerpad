@@ -1,4 +1,4 @@
-package com.xebia.fs101.writerpad.domain;
+package com.xebia.fs101.writerpad.services.helpers;
 
 public class ReadingTime {
 

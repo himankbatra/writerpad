@@ -4,22 +4,28 @@ package com.xebia.fs101.writerpad.api.rest.resources;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xebia.fs101.writerpad.api.rest.representations.ArticleRequest;
 import com.xebia.fs101.writerpad.api.rest.representations.CommentRequest;
+import com.xebia.fs101.writerpad.api.rest.representations.UserRequest;
 import com.xebia.fs101.writerpad.domain.Article;
 import com.xebia.fs101.writerpad.domain.Comment;
+import com.xebia.fs101.writerpad.domain.User;
 import com.xebia.fs101.writerpad.repositories.ArticleRepository;
 import com.xebia.fs101.writerpad.repositories.CommentRepository;
+import com.xebia.fs101.writerpad.repositories.UserRepository;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Arrays;
 import java.util.UUID;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -30,7 +36,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@ActiveProfiles("test")
 class CommentResourceTests {
 
     @Autowired
@@ -45,21 +50,41 @@ class CommentResourceTests {
     @Autowired
     private CommentRepository commentRepository;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    private User user;
+
+    @BeforeEach
+    void setUp() {
+        UserRequest userRequest = new UserRequest.Builder()
+                .withUsername("abc")
+                .withPassword("abc@123")
+                .withEmail("abc@123.com")
+                .build();
+        user = userRequest.toUser(passwordEncoder);
+        userRepository.save(user);
+    }
+
     @AfterEach
     void tearDown() {
         this.commentRepository.deleteAll();
         this.articleRepository.deleteAll();
+        this.userRepository.deleteAll();
     }
 
     @Test
     void should_create_comment_for_provided_article_slug_id_when_mandatory_and_optional_request_data_is_provided() throws Exception {
-
 
         Article article = new Article.Builder()
                 .withTitle("spring")
                 .withBody("appl")
                 .withDescription("boot")
                 .build();
+        article.setUser(user);
         Article savedArticle = articleRepository.save(article);
         String id = String.format("%s-%s", savedArticle.getSlug(), savedArticle.getId());
 
@@ -69,7 +94,7 @@ class CommentResourceTests {
         mockMvc.perform(
                 post("/api/articles/{slug_id}/comments", id)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
+                        .content(json).with(httpBasic("abc", "abc@123")))
                 .andDo(print())
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").isNotEmpty())
@@ -88,6 +113,7 @@ class CommentResourceTests {
                 .withBody("appl")
                 .withDescription("boot")
                 .build();
+        article.setUser(user);
         Article savedArticle = articleRepository.save(article);
         String id = String.format("%s-%s", savedArticle.getSlug(), savedArticle.getId());
 
@@ -97,7 +123,7 @@ class CommentResourceTests {
         mockMvc.perform(
                 post("/api/articles/{slug_id}/comments", id)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
+                        .content(json).with(httpBasic("abc", "abc@123")))
                 .andDo(print())
                 .andExpect(status().isBadRequest());
     }
@@ -110,15 +136,16 @@ class CommentResourceTests {
                 .withTitle("title")
                 .withDescription("description")
                 .build();
-        System.out.println(articleRequest.toArticle());
-        Article savedArticle = articleRepository.save(articleRequest.toArticle());
+        Article article = articleRequest.toArticle();
+        article.setUser(user);
+        Article savedArticle = articleRepository.save(article);
         String slugId = String.format("%s_%s", savedArticle.getSlug(),
                 savedArticle.getId());
         CommentRequest commentRequest = new CommentRequest("semen");
         String json = objectMapper.writeValueAsString(commentRequest);
         mockMvc.perform(post("/api/articles/{slug_id}/comments", slugId)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(json))
+                .content(json).with(httpBasic("abc", "abc@123")))
                 .andDo(print())
                 .andExpect(status().isBadRequest());
     }
@@ -130,13 +157,15 @@ class CommentResourceTests {
                 .withTitle("Title")
                 .withDescription("Desc")
                 .build();
+        article.setUser(user);
         Article saved = articleRepository.save(article);
         String id = String.format("%s-%s", saved.getSlug(), saved.getId());
         Comment comment1 = new Comment("Comment1", "10.1.1.1", article);
         Comment comment2 = new Comment("Comment2", "10.1.1.1", article);
         Comment comment3 = new Comment("Comment3", "10.1.1.1", article);
         commentRepository.saveAll(Arrays.asList(comment1, comment2, comment3));
-        this.mockMvc.perform(get("/api/articles/{slug_id}/comments", id))
+        this.mockMvc.perform(get("/api/articles/{slug_id}/comments", id)
+                .with(httpBasic("abc", "abc@123")))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(3));
@@ -149,13 +178,14 @@ class CommentResourceTests {
                 .withTitle("Title")
                 .withDescription("Desc")
                 .build();
+        article.setUser(user);
         Article saved = articleRepository.save(article);
         String id = saved.getSlug() + "-" + saved.getId();
         Comment comment = new Comment("Comment1", "10.1.1.1", saved);
         Comment savedComment = commentRepository.save(comment);
         Long commentId = savedComment.getId();
         mockMvc.perform(delete("/api/articles/{slug_id}/comments/{comment_id}", id,
-                commentId))
+                commentId).with(httpBasic("abc", "abc@123")))
                 .andDo(print())
                 .andExpect(status().isNoContent());
     }
@@ -167,13 +197,14 @@ class CommentResourceTests {
                 .withTitle("Title")
                 .withDescription("Desc")
                 .build();
+        article.setUser(user);
         Article saved = articleRepository.save(article);
         String id = "abc" + "-" + UUID.randomUUID().toString();
         Comment comment = new Comment("Comment1", "10.1.1.1", saved);
         Comment savedComment = commentRepository.save(comment);
         Long commentId = savedComment.getId();
         mockMvc.perform(delete("/api/articles/{slug_id}/comments/{comment_id}", id,
-                commentId))
+                commentId).with(httpBasic("abc", "abc@123")))
                 .andDo(print())
                 .andExpect(status().isNotFound());
     }

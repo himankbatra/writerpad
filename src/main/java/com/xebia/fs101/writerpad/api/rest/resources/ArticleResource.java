@@ -1,18 +1,21 @@
 package com.xebia.fs101.writerpad.api.rest.resources;
 
 import com.xebia.fs101.writerpad.api.rest.representations.ArticleRequest;
+import com.xebia.fs101.writerpad.api.rest.representations.ArticleResponse;
 import com.xebia.fs101.writerpad.api.rest.representations.ReadingTimeResponse;
 import com.xebia.fs101.writerpad.api.rest.representations.TagResponse;
 import com.xebia.fs101.writerpad.domain.Article;
-import com.xebia.fs101.writerpad.domain.ReadingTime;
+import com.xebia.fs101.writerpad.services.helpers.ReadingTime;
+import com.xebia.fs101.writerpad.domain.User;
 import com.xebia.fs101.writerpad.services.ArticleService;
-import com.xebia.fs101.writerpad.services.ReadingTimeService;
+import com.xebia.fs101.writerpad.services.helpers.ReadingTimeService;
 import com.xebia.fs101.writerpad.services.mail.MailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.MailException;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -45,16 +48,20 @@ public class ArticleResource {
     @Autowired
     private ReadingTimeService readingTimeService;
 
-
     @PostMapping
-    public ResponseEntity<Article> create(@Valid @RequestBody ArticleRequest articleRequest) {
-
+    public ResponseEntity<ArticleResponse> create(@AuthenticationPrincipal User user,
+                                                  @Valid @RequestBody
+                                                          ArticleRequest articleRequest) {
         try {
-            Article savedArticle = this.articleService.save(articleRequest.toArticle());
-            return new ResponseEntity<>(savedArticle, HttpStatus.CREATED);
+            Article savedArticle = this.articleService.save(articleRequest.toArticle(),
+                    user);
+            return new ResponseEntity<>(ArticleResponse.from(savedArticle),
+                    HttpStatus.CREATED);
+
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
+
     }
 
 
@@ -133,7 +140,6 @@ public class ArticleResource {
 
     @PutMapping(path = "/{slug_id}/favourite")
     public ResponseEntity<Void> favourite(@PathVariable(name = "slug_id") String slugId) {
-
         this.articleService.favourite(slugId);
         return ResponseEntity.noContent().build();
 

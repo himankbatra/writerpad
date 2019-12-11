@@ -3,17 +3,23 @@ package com.xebia.fs101.writerpad.api.rest.resources;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xebia.fs101.writerpad.api.rest.representations.ArticleRequest;
+import com.xebia.fs101.writerpad.api.rest.representations.UserRequest;
 import com.xebia.fs101.writerpad.domain.Article;
 import com.xebia.fs101.writerpad.domain.ArticleStatus;
+import com.xebia.fs101.writerpad.domain.User;
 import com.xebia.fs101.writerpad.repositories.ArticleRepository;
+import com.xebia.fs101.writerpad.repositories.UserRepository;
 import com.xebia.fs101.writerpad.services.ArticleService;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -31,6 +37,7 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.isA;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -58,10 +65,29 @@ class ArticleResourceTests {
     @Autowired
     private ArticleRepository articleRepository;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    private  User user;
+
+    @BeforeEach
+    void setUp() {
+        UserRequest userRequest = new UserRequest.Builder()
+                .withUsername("abc")
+                .withPassword("abc@123")
+                .withEmail("abc@123.com")
+                .build();
+        user = userRequest.toUser(passwordEncoder);
+        userRepository.save(user);
+    }
 
     @AfterEach
     void tearDown() {
         this.articleRepository.deleteAll();
+        this.userRepository.deleteAll();
 
     }
 
@@ -70,9 +96,9 @@ class ArticleResourceTests {
         assertThat(mockMvc).isNotNull();
     }
 
-
     @Test
     void should_create_article_when_mandatory_request_data_is_provided() throws Exception {
+
         ArticleRequest articleRequest = new ArticleRequest.Builder()
                 .withTitle("How to learn Spring Boot")
                 .withBody("You have to believe")
@@ -83,7 +109,7 @@ class ArticleResourceTests {
         mockMvc.perform(
                 post("/api/articles")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
+                        .content(json).with(httpBasic("abc", "abc@123")))
                 .andDo(print())
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").isNotEmpty())
@@ -96,7 +122,9 @@ class ArticleResourceTests {
                 .andExpect(jsonPath("$.favourited").isBoolean())
                 .andExpect(jsonPath("$.favourited").value(false))
                 .andExpect(jsonPath("$.favouritesCount").value(0))
-                .andExpect(jsonPath("$.status").value("DRAFT"));
+                .andExpect(jsonPath("$.status").value("DRAFT"))
+                .andExpect(jsonPath("$.author").hasJsonPath())
+                .andExpect(jsonPath("$..username").value("abc"));
     }
 
 
@@ -112,14 +140,16 @@ class ArticleResourceTests {
         mockMvc.perform(
                 post("/api/articles")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
+                        .content(json).with(httpBasic("abc", "abc@123")))
                 .andDo(print())
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").isNotEmpty())
                 .andExpect(jsonPath("$.tags").isArray())
                 .andExpect(jsonPath("$.tags")
                         .value(containsInAnyOrder("java", "spring-boot", "tutorial")))
-                .andExpect(jsonPath("$.status").value("DRAFT"));
+                .andExpect(jsonPath("$.status").value("DRAFT"))
+                .andExpect(jsonPath("$.author").hasJsonPath())
+                .andExpect(jsonPath("$..username").value("abc"));;
     }
 
     @Test
@@ -130,7 +160,7 @@ class ArticleResourceTests {
         mockMvc.perform(
                 post("/api/articles")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
+                        .content(json).with(httpBasic("abc", "abc@123")))
                 .andDo(print())
                 .andExpect(status().isBadRequest());
     }
@@ -146,16 +176,16 @@ class ArticleResourceTests {
         mockMvc.perform(
                 post("/api/articles")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
+                        .content(json).with(httpBasic("abc", "abc@123")))
                 .andDo(print())
                 .andExpect(status().isBadRequest());
     }
 
 
     @Test
-    void when_i_pass_article_request_without_title_should_give_status_internal_server_error() throws Exception {
+    void should_give_500_bad_request_when_creating_article_with_invalid_data() throws Exception {
 
-        doThrow(new RuntimeException()).when(articleService).save(any());
+        doThrow(new RuntimeException()).when(articleService).save(any(), any());
 
         String json = "{\n" +
                 "  \"title\": \"How to learn Spring Boot\",\n" +
@@ -167,7 +197,7 @@ class ArticleResourceTests {
         mockMvc.perform(post("/api/articles")
                 .accept(MediaType.APPLICATION_JSON)
                 .content(json)
-                .contentType(MediaType.APPLICATION_JSON))
+                .contentType(MediaType.APPLICATION_JSON).with(httpBasic("abc", "abc@123")))
                 .andExpect(status().isInternalServerError());
     }
 
@@ -175,12 +205,12 @@ class ArticleResourceTests {
     @Test
     void should_update_article() throws Exception {
 
-
         Article article = new Article.Builder()
                 .withBody("spring boot")
                 .withDescription("application")
                 .withTitle("spring boot application")
                 .build();
+        article.setUser(user);
         Article savedArticle = articleRepository.save(article);
 
         ArticleRequest articleRequest = new ArticleRequest.Builder()
@@ -191,7 +221,7 @@ class ArticleResourceTests {
         String json = objectMapper.writeValueAsString(articleRequest);
         this.mockMvc.perform(patch("/api/articles/{slug_id}", id)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(json))
+                .content(json).with(httpBasic("abc", "abc@123")))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").isNotEmpty())
@@ -220,12 +250,12 @@ class ArticleResourceTests {
                 .withTitle("spring boot application")
                 .withUpdatedAt()
                 .build();
+        article.setUser(user);
         Article savedArticle = articleRepository.save(article);
-
 
         mockMvc.perform(get("/api/articles/{slug_id}",
                 savedArticle.getSlug() + "-" + savedArticle.getId())
-                .contentType(MediaType.APPLICATION_JSON))
+                .contentType(MediaType.APPLICATION_JSON).with(httpBasic("abc", "abc@123")))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").isNotEmpty())
@@ -249,7 +279,7 @@ class ArticleResourceTests {
         Article article2 = createArticle("Title2", "description2", "body2");
         Article article3 = createArticle("Title3", "description3", "body3");
         articleRepository.saveAll(Arrays.asList(article1, article2, article3));
-        this.mockMvc.perform(get("/api/articles"))
+        this.mockMvc.perform(get("/api/articles").with(httpBasic("abc", "abc@123")))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(3))
@@ -264,7 +294,7 @@ class ArticleResourceTests {
         Article article2 = createArticle("Title2", "description2", "body2");
         Article article3 = createArticle("Title3", "description3", "body3");
         articleRepository.saveAll(Arrays.asList(article1, article2, article3));
-        this.mockMvc.perform(get("/api/articles?page=0&size=1"))
+        this.mockMvc.perform(get("/api/articles?page=0&size=1").with(httpBasic("abc", "abc@123")))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
@@ -273,12 +303,14 @@ class ArticleResourceTests {
     }
 
     private Article createArticle(String title, String description, String body) {
-        return new Article.Builder()
+        Article article = new Article.Builder()
                 .withTitle(title)
                 .withDescription(description)
                 .withBody(body)
                 .withUpdatedAt()
                 .build();
+        article.setUser(user);
+        return article;
     }
 
 
@@ -289,9 +321,10 @@ class ArticleResourceTests {
                 .withBody("appl")
                 .withDescription("boot")
                 .build();
+        article.setUser(user);
         Article savedArticle = articleRepository.save(article);
         String id = String.format("%s-%s", savedArticle.getSlug(), savedArticle.getId());
-        this.mockMvc.perform(delete("/api/articles/{slug_id}", id)
+        this.mockMvc.perform(delete("/api/articles/{slug_id}", id).with(httpBasic("abc", "abc@123"))
         ).andDo(print())
                 .andExpect(status().isNoContent());
     }
@@ -299,7 +332,7 @@ class ArticleResourceTests {
     @Test
     void should_not_delete_an_article() throws Exception {
         String id = "abc" + "-" + UUID.randomUUID().toString();
-        this.mockMvc.perform(delete("/api/articles/{slug_id}", id)
+        this.mockMvc.perform(delete("/api/articles/{slug_id}", id).with(httpBasic("abc", "abc@123"))
         ).andDo(print())
                 .andExpect(status().isNotFound());
     }
@@ -311,7 +344,7 @@ class ArticleResourceTests {
         Article article3 = createArticle("Title3", "description3", "body3")
                 .publish();
         articleRepository.saveAll(Arrays.asList(article1, article2, article3));
-        this.mockMvc.perform(get("/api/articles?status=DRAFT"))
+        this.mockMvc.perform(get("/api/articles?status=DRAFT").with(httpBasic("abc", "abc@123")))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2))
@@ -325,7 +358,7 @@ class ArticleResourceTests {
         Article article = createArticle("Title", "Description", "body");
         articleRepository.save(article);
         String slugId = String.format("%s-%s", article.getSlug(), article.getId());
-        this.mockMvc.perform(post("/api/articles/{slug_id}/publish", slugId))
+        this.mockMvc.perform(post("/api/articles/{slug_id}/publish", slugId).with(httpBasic("abc", "abc@123")))
                 .andDo(print())
                 .andExpect(status().isNoContent());
         assertThat(articleRepository.findById(article.getId())
@@ -337,7 +370,7 @@ class ArticleResourceTests {
         Article article = createArticle("Title", "Desc", "Body").publish();
         Article saved = articleRepository.save(article);
         String id = String.format("%s-%s", saved.getSlug(), saved.getId());
-        this.mockMvc.perform(post("/api/articles/{slugUuid}/publish", id))
+        this.mockMvc.perform(post("/api/articles/{slugUuid}/publish", id).with(httpBasic("abc", "abc@123")))
                 .andDo(print())
                 .andExpect(status().isBadRequest());
     }
@@ -349,7 +382,7 @@ class ArticleResourceTests {
                         .publish();
         Article saved = articleRepository.save(article);
         String id = String.format("%s-%s", saved.getSlug(), saved.getId());
-        this.mockMvc.perform(get("/api/articles/{slugUuid}/timetoread", id))
+        this.mockMvc.perform(get("/api/articles/{slugUuid}/timetoread", id).with(httpBasic("abc", "abc@123")))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.articleId").isNotEmpty())
@@ -374,8 +407,10 @@ class ArticleResourceTests {
                         .withDescription("Desc")
                         .withTags(new HashSet<>(Collections.singletonList("t1")))
                         .build();
+        article.setUser(user);
+        article2.setUser(user);
         this.articleRepository.saveAll(Arrays.asList(article, article2));
-        this.mockMvc.perform(get("/api/articles/tags"))
+        this.mockMvc.perform(get("/api/articles/tags").with(httpBasic("abc", "abc@123")))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(3))
@@ -391,7 +426,7 @@ class ArticleResourceTests {
         Article article = createArticle("title", "desc", "body");
         Article saved = articleRepository.save(article);
         String id = String.format("%s-%s", saved.getSlug(), saved.getId());
-        this.mockMvc.perform(put("/api/articles/{slug_id}/favourite", id))
+        this.mockMvc.perform(put("/api/articles/{slug_id}/favourite", id).with(httpBasic("abc", "abc@123")))
                 .andDo(print())
                 .andExpect(status().isNoContent());
         Optional<Article> articleFavouritesCount =
@@ -409,7 +444,7 @@ class ArticleResourceTests {
         article.favourite();
         Article saved = articleRepository.save(article);
         String id = String.format("%s-%s", saved.getSlug(), saved.getId());
-        this.mockMvc.perform(delete("/api/articles/{slug_id}/favourite", id))
+        this.mockMvc.perform(delete("/api/articles/{slug_id}/favourite", id).with(httpBasic("abc", "abc@123")))
                 .andDo(print())
                 .andExpect(status().isNoContent());
         Optional<Article> articleFavouritesCount =
@@ -430,9 +465,10 @@ class ArticleResourceTests {
                 .withFavourited(true)
                 .withFavouritesCount(2L)
                 .build();
+        article.setUser(user);
         Article saved = articleRepository.save(article);
         String id = String.format("%s-%s", saved.getSlug(), saved.getId());
-        this.mockMvc.perform(delete("/api/articles/{slug_id}/favourite", id))
+        this.mockMvc.perform(delete("/api/articles/{slug_id}/favourite", id).with(httpBasic("abc", "abc@123")))
                 .andDo(print())
                 .andExpect(status().isNoContent());
         Optional<Article> articleFavouritesCount =

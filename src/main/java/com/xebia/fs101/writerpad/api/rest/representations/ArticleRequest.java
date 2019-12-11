@@ -12,17 +12,19 @@ import java.util.stream.Collectors;
 
 @JsonDeserialize(builder = ArticleRequest.Builder.class)
 public class ArticleRequest {
+
     @NotBlank(message = "Please Provide Title")
-    private String title;
+    private final String title;
+
     @NotBlank(message = "Please Provide description")
-    private String description;
+    private final String description;
+
     @NotBlank(message = "Please Provide body")
-    private String body;
+    private final String body;
 
-    private Set<String> tags;
+    private final Set<String> tags;
 
-    private String featuredImageUrl;
-
+    private final String featuredImageUrl;
 
     private ArticleRequest(Builder builder) {
         title = builder.title;
@@ -30,7 +32,6 @@ public class ArticleRequest {
         body = builder.body;
         tags = builder.tags;
         featuredImageUrl = builder.featuredImageUrl;
-
     }
 
     public String getTitle() {
@@ -53,7 +54,6 @@ public class ArticleRequest {
         return featuredImageUrl;
     }
 
-
     public Article toArticle() {
         return new Article.Builder().withTitle(this.title)
                 .withDescription(this.description)
@@ -63,7 +63,6 @@ public class ArticleRequest {
                 .withFeaturedImageUrl(this.featuredImageUrl)
                 .withUpdatedAt()
                 .build();
-
     }
 
     @JsonPOJOBuilder
@@ -73,7 +72,6 @@ public class ArticleRequest {
         private String body;
         private Set<String> tags;
         private String featuredImageUrl;
-
 
         public Builder() {
         }
@@ -103,10 +101,10 @@ public class ArticleRequest {
             return this;
         }
 
-
         public ArticleRequest build() {
             return new ArticleRequest(this);
         }
+
     }
 
     @Override

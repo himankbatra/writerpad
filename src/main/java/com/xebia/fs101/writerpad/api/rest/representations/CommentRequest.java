@@ -9,7 +9,7 @@ import javax.validation.constraints.NotBlank;
 public class CommentRequest {
 
     @NotBlank(message = "Please Provide body")
-    private String body;
+    private final String body;
 
     @JsonCreator
     public CommentRequest(@NotBlank(message = "Please Provide body") String body) {
@@ -23,4 +23,5 @@ public class CommentRequest {
     public Comment toComment(String ipAddress, Article article) {
         return new Comment(this.body, ipAddress, article);
     }
+
 }

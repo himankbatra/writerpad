@@ -1,6 +1,6 @@
 package com.xebia.fs101.writerpad.api.rest.representations;
 
-import com.xebia.fs101.writerpad.domain.ReadingTime;
+import com.xebia.fs101.writerpad.services.helpers.ReadingTime;
 
 public class ReadingTimeResponse {
 

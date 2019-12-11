@@ -2,6 +2,7 @@ package com.xebia.fs101.writerpad.domain;
 
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.xebia.fs101.writerpad.utils.StringUtils;
 
 import javax.persistence.CollectionTable;
@@ -14,6 +15,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
@@ -63,8 +65,6 @@ public class Article {
 
     private long favouritesCount = 0;
 
-
-    // @JsonIgnore
     @JsonBackReference
     @OneToMany(mappedBy = "article")
     private List<Comment> comments;
@@ -72,6 +72,9 @@ public class Article {
     @Enumerated(EnumType.STRING)
     private ArticleStatus status;
 
+    @JsonManagedReference
+    @ManyToOne(optional = false)
+    private User user;
 
     public Article update(Article copyFrom) {
 
@@ -179,6 +182,13 @@ public class Article {
         this.favourited = this.favouritesCount != 0;
     }
 
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public User getUser() {
+        return user;
+    }
 
     public static final class Builder {
         private String title;
@@ -318,4 +328,6 @@ public class Article {
         result = 31 * result + (status != null ? status.hashCode() : 0);
         return result;
     }
+
+
 }
