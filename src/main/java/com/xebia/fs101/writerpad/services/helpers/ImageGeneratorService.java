@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Objects;
+
 @Service
 public class ImageGeneratorService {
 
@@ -22,7 +24,8 @@ public class ImageGeneratorService {
         String result = restTemplate.getForObject(featuredImageUrl,
                 String.class);
         try {
-            JsonNode jsonNode = new ObjectMapper().readTree(result);
+            JsonNode jsonNode =
+                    new ObjectMapper().readTree(Objects.requireNonNull(result));
             return jsonNode.get("urls").get("regular").toString();
         } catch (JsonProcessingException e) {
             throw new RuntimeException("error generating featured image");
