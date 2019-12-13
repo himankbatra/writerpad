@@ -76,6 +76,7 @@ public class Article {
     @ManyToOne(optional = false)
     private User user;
 
+
     public Article update(Article copyFrom) {
 
         if (Objects.nonNull(copyFrom.getTitle())) {

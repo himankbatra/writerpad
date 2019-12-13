@@ -5,7 +5,6 @@ import com.xebia.fs101.writerpad.domain.Article;
 import com.xebia.fs101.writerpad.domain.ArticleStatus;
 import com.xebia.fs101.writerpad.domain.User;
 import com.xebia.fs101.writerpad.exceptions.ArticleNotFoundException;
-import com.xebia.fs101.writerpad.exceptions.DuplicateArticleFoundException;
 import com.xebia.fs101.writerpad.exceptions.ForbiddenOperationException;
 import com.xebia.fs101.writerpad.repositories.ArticleRepository;
 import com.xebia.fs101.writerpad.repositories.UserRepository;
@@ -40,11 +39,8 @@ public class ArticleService {
     public Article save(Article article, User user) {
         Stream<String> targetStream =
                 this.articleRepository.findAll().parallelStream().map(Article::getBody);
-        if (this.plagiarismCheckerService.isPlagiarism(article.getBody(), targetStream)) {
-            throw new DuplicateArticleFoundException("Same article found !!!");
-        }
-        Optional<User> foundUser = this.userRepository.findById(user.getUserid());
-        article.setUser(foundUser.get());
+        this.plagiarismCheckerService.checkPlagiarism(article.getBody(), targetStream);
+        article.setUser(user);
         return this.articleRepository.save(article);
 
     }
@@ -57,25 +53,20 @@ public class ArticleService {
 
     }
 
-    public Article update(String slugId, Article copyFrom, User user) {
-
-        Article article = this.findById(slugId);
+    public Article update(Article article, Article copyFrom) {
 
         Stream<String> targetStream =
                 this.articleRepository.findAll().parallelStream()
                         .filter(a -> a.getId() != article.getId()).map(Article::getBody);
-        if (this.plagiarismCheckerService.isPlagiarism(copyFrom.getBody(),
-                targetStream)) {
-            throw new DuplicateArticleFoundException("Same article found !!!");
-        }
-
-        Optional<User> foundUser = this.userRepository.findById(user.getUserid());
-        if (!Objects.equals(article.getUser(), foundUser.get())) {
-            throw new ForbiddenOperationException("You are not allowed to "
-                    + "perform this operation");
-        }
+        this.plagiarismCheckerService.checkPlagiarism(copyFrom.getBody(), targetStream);
         return this.articleRepository.save(article.update(copyFrom));
 
+    }
+
+    public User getUser(User customUserDetails) {
+        Optional<User> foundUser =
+                this.userRepository.findById(customUserDetails.getUserid());
+        return foundUser.get();
     }
 
 
@@ -87,14 +78,8 @@ public class ArticleService {
         return this.articleRepository.findAll(pageable).getContent();
     }
 
-    public void delete(String slugId, User user) {
-        UUID id = toUuid(slugId);
-        Article article = this.findById(slugId);
-        Optional<User> foundUser = this.userRepository.findById(user.getUserid());
-        if (!Objects.equals(article.getUser(), foundUser.get())) {
-            throw new ForbiddenOperationException("You are not allowed to "
-                    + "perform this operation");
-        }
+    public void delete(Article article) {
+        UUID id = article.getId();
         this.articleRepository.deleteById(id);
 
     }

@@ -3,6 +3,7 @@ package com.xebia.fs101.writerpad.api.rest.representations;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import com.xebia.fs101.writerpad.domain.User;
+import com.xebia.fs101.writerpad.domain.UserRole;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import javax.validation.constraints.Email;
@@ -22,11 +23,14 @@ public class UserRequest {
     @NotBlank(message = "Please Provide password")
     private final String password;
 
+    private UserRole userRole;
+
 
     private UserRequest(Builder builder) {
         username = builder.username;
         email = builder.email;
         password = builder.password;
+        userRole = builder.userRole;
     }
 
 
@@ -34,16 +38,20 @@ public class UserRequest {
         return new User.Builder().withUsername(this.username)
                 .withEmail(this.email)
                 .withPassword(passwordEncoder.encode(this.password))
+                .withUserRole(this.userRole)
                 .build();
     }
 
     @JsonPOJOBuilder
     public static final class Builder {
 
+
         private @NotBlank(message = "Please Provide username") String username;
         private @NotBlank(message = "Please Provide email") @Email(message = "Please "
                 + "Provide valid email") String email;
         private @NotBlank(message = "Please Provide password") String password;
+
+        private UserRole userRole = UserRole.WRITER;
 
         public Builder() {
         }
@@ -61,6 +69,12 @@ public class UserRequest {
 
         public Builder withPassword(@NotBlank(message = "Please Provide password") String val) {
             password = val;
+            return this;
+        }
+
+
+        public Builder withUserRole(UserRole val) {
+            userRole = val;
             return this;
         }
 
@@ -82,4 +96,7 @@ public class UserRequest {
         return password;
     }
 
+    public UserRole getUserRole() {
+        return userRole;
+    }
 }

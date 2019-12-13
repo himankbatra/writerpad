@@ -28,7 +28,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.refEq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -54,8 +56,7 @@ class ArticleServiceTests {
         User user = new User();
         Article savedArticle = new Article.Builder().withBody("abc").build();
         when(articleRepository.findAll()).thenReturn(Collections.singletonList(savedArticle));
-        when(plagiarismCheckerService.isPlagiarism(any(), any())).thenReturn(false);
-        when(userRepository.findById(anyLong())).thenReturn(Optional.of(user));
+        doNothing().when(plagiarismCheckerService).checkPlagiarism(any(), any());
         when(articleRepository.save(any())).thenReturn(new Article());
         Article article = new Article.Builder()
                 .withBody("body")
@@ -64,8 +65,7 @@ class ArticleServiceTests {
         article.setUser(user);
         articleService.save(article, user);
         verify(articleRepository).findAll();
-        //verify(plagiarismCheckerService).isPlagiarism(article.getBody(),Stream.of("abc"));
-        verify(userRepository).findById(user.getUserid());
+       verify(plagiarismCheckerService).checkPlagiarism(anyString(),any());
         verify(articleRepository).save(article);
         Article articleWithStatusDraft =
                 new Article.Builder().withBody("body")
@@ -89,32 +89,25 @@ class ArticleServiceTests {
 
     @Test
     void should_be_able_to_update_an_article() {
-        User user = new User();
         Article article = new Article.Builder()
                 .withBody("body")
                 .withDescription("desc")
                 .withTitle("title")
                 .build();
-        article.setUser(user);
         when(articleRepository.findAll()).thenReturn(Collections.singletonList(article));
-        when(plagiarismCheckerService.isPlagiarism(any(), any())).thenReturn(false);
-        when(articleRepository.findById(any())).thenReturn(Optional.of(article));
+        doNothing().when(plagiarismCheckerService).checkPlagiarism(any(), any());
         when(articleRepository.save(any())).thenReturn(new Article());
-        when(userRepository.findById(anyLong())).thenReturn(Optional.of(user));
-        UUID id = UUID.randomUUID();
         Article articleTobeUpdated = new Article.Builder()
                 .withBody("updated body")
                 .build();
-        articleService.update("slug-" + id, articleTobeUpdated, user);
+        articleService.update(article, articleTobeUpdated);
         verify(articleRepository).findAll();
-        verify(articleRepository).findById(id);
+        verify(plagiarismCheckerService).checkPlagiarism(anyString(),any());
         Article expectedArticle =
                 new Article.Builder().withBody("updated body")
                         .withDescription("desc")
                         .withTitle("title")
                         .build();
-        expectedArticle.setUser(user);
-        verify(userRepository).findById(user.getUserid());
         verify(articleRepository).save(refEq(expectedArticle, "createdAt",
                 "updatedAt"));
         verifyNoMoreInteractions(articleRepository);
@@ -132,16 +125,9 @@ class ArticleServiceTests {
 
     @Test
     void should_be_able_to_delete_a_article() {
-        User user = new User();
-        when(userRepository.findById(anyLong())).thenReturn(Optional.of(user));
         Article article = new Article();
-        article.setUser(user);
-        when(articleRepository.findById(any())).thenReturn(Optional.of(article));
-        UUID id = UUID.randomUUID();
-        this.articleService.delete("slug-" + id, user);
-        verify(articleRepository, times(1)).findById(id);
-        verify(userRepository).findById(user.getUserid());
-        verify(articleRepository).deleteById(id);
+        this.articleService.delete(article);
+        verify(articleRepository).deleteById(article.getId());
         verifyNoMoreInteractions(articleRepository);
     }
 
@@ -251,61 +237,7 @@ class ArticleServiceTests {
 
     }
 
-    @Test
-    void should_not_update_the_article_if_user_is_not_owner() {
-        User user1 = new User.Builder().withUsername("test").build();
-        User user = new User();
-        Article article = new Article.Builder()
-                .withBody("body")
-                .withDescription("desc")
-                .withTitle("title")
-                .build();
-        article.setUser(user);
-        when(articleRepository.findAll()).thenReturn(Collections.singletonList(article));
-        when(plagiarismCheckerService.isPlagiarism(any(), any())).thenReturn(false);
-        when(articleRepository.findById(any())).thenReturn(Optional.of(article));
-        when(userRepository.findById(any())).thenReturn(Optional.of(user1));
-        UUID id = UUID.randomUUID();
-        Article articleTobeUpdated = new Article.Builder()
-                .withBody("updated body")
-                .build();
-        articleTobeUpdated.setUser(user);
-        ForbiddenOperationException thrown =
-                assertThrows(ForbiddenOperationException.class,
-                        () -> articleService.update("slug-" + id, articleTobeUpdated,
-                                user),
-                        "Expected doThing() to throw, but it didn't");
-        assertTrue(thrown.getMessage().contains("You are not allowed to perform this " +
-                "operation"));
-        verify(articleRepository).findAll();
-        verify(articleRepository).findById(id);
-        verify(userRepository).findById(user.getUserid());
-        verifyNoMoreInteractions(articleRepository);
 
-    }
-
-
-    @Test
-    void should_not_delete_the_article_if_user_is_not_owner() {
-        User user1 = new User.Builder().withUsername("test").build();
-        User user = new User();
-        when(userRepository.findById(anyLong())).thenReturn(Optional.of(user1));
-        Article article = new Article();
-        article.setUser(user);
-        when(articleRepository.findById(any())).thenReturn(Optional.of(article));
-        UUID id = UUID.randomUUID();
-        ForbiddenOperationException thrown =
-                assertThrows(ForbiddenOperationException.class,
-                        () -> articleService.delete("slug-" + id, user),
-                        "Expected doThing() to throw, but it didn't");
-        assertTrue(thrown.getMessage().contains("You are not allowed to perform this " +
-                "operation"));
-        verify(articleRepository).findById(id);
-        verify(userRepository).findById(user.getUserid());
-        verifyNoMoreInteractions(articleRepository);
-
-
-    }
 
 
 }

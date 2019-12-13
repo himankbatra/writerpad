@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -33,16 +35,22 @@ public class User {
     @OneToMany(mappedBy = "user")
     private List<Article> articles;
 
+    @Enumerated(EnumType.STRING)
+    private UserRole userRole;
+
     private User(Builder builder) {
         username = builder.username;
         email = builder.email;
         password = builder.password;
+        userRole = builder.userRole;
     }
 
     public static final class Builder {
+
         private String username;
         private String email;
         private String password;
+        private UserRole userRole = UserRole.WRITER;
 
         public Builder() {
         }
@@ -59,6 +67,11 @@ public class User {
 
         public Builder withPassword(String val) {
             password = val;
+            return this;
+        }
+
+        public Builder withUserRole(UserRole val) {
+            userRole = val;
             return this;
         }
 
@@ -90,6 +103,10 @@ public class User {
         return articles;
     }
 
+    public UserRole getUserRole() {
+        return userRole;
+    }
+
     public User() {
     }
 
@@ -99,6 +116,7 @@ public class User {
         this.username = other.username;
         this.email = other.email;
         this.password = other.password;
+        this.userRole=other.userRole;
     }
 
     @Override
@@ -107,6 +125,10 @@ public class User {
                 + "userid=" + userid
                 + ", username='" + username + '\''
                 + ", email='" + email + '\''
+                + ", userRole='" + userRole + '\''
                 + '}';
     }
+
+
+
 }

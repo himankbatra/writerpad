@@ -6,11 +6,16 @@ import com.xebia.fs101.writerpad.api.rest.representations.ReadingTimeResponse;
 import com.xebia.fs101.writerpad.api.rest.representations.TagResponse;
 import com.xebia.fs101.writerpad.domain.Article;
 import com.xebia.fs101.writerpad.domain.User;
+import com.xebia.fs101.writerpad.exceptions.ForbiddenOperationException;
 import com.xebia.fs101.writerpad.services.ArticleService;
-import com.xebia.fs101.writerpad.services.helpers.ImageGeneratorService;
+import com.xebia.fs101.writerpad.services.clients.ImageGenerator;
 import com.xebia.fs101.writerpad.services.helpers.ReadingTime;
 import com.xebia.fs101.writerpad.services.helpers.ReadingTimeService;
 import com.xebia.fs101.writerpad.services.mail.MailService;
+import com.xebia.fs101.writerpad.services.security.AdminOnly;
+import com.xebia.fs101.writerpad.services.security.EditorOnly;
+import com.xebia.fs101.writerpad.services.security.WriterOnly;
+import org.hibernate.exception.JDBCConnectionException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -51,41 +56,52 @@ public class ArticleResource {
     private ReadingTimeService readingTimeService;
 
     @Autowired
-    private ImageGeneratorService imageGeneratorService;
+    private ImageGenerator imageGenerator;
 
+    @WriterOnly
     @PostMapping
     public ResponseEntity<ArticleResponse> create(@AuthenticationPrincipal User user,
                                                   @Valid @RequestBody
                                                           ArticleRequest articleRequest) {
-
         String featuredImageUrl = Objects.isNull(articleRequest.getFeaturedImageUrl())
-                ? imageGeneratorService.generateRandomImage()
+                ? imageGenerator.generateRandomImage()
                 : articleRequest.getFeaturedImageUrl();
 
         Article savedArticle =
                 this.articleService.save(articleRequest
                                 .toArticle(featuredImageUrl),
-                        user);
+                        this.articleService.getUser(user));
         return new ResponseEntity<>(ArticleResponse.from(savedArticle),
                 HttpStatus.CREATED);
 
     }
 
-
+    @WriterOnly
     @PatchMapping(path = "/{slug_id}")
-    public ResponseEntity<Article> update(@AuthenticationPrincipal User user,
+    public ResponseEntity<Article> update(@AuthenticationPrincipal User customUserDetails,
                                           @RequestBody ArticleRequest articleRequest,
                                           @PathVariable("slug_id") final String slugId) {
+
+        Article article = this.articleService.findById(slugId);
+        verifyUser(customUserDetails, article.getUser());
         String featuredImageUrl = Objects.isNull(articleRequest.getFeaturedImageUrl())
-                ? imageGeneratorService.generateRandomImage()
+                ? imageGenerator.generateRandomImage()
                 : articleRequest.getFeaturedImageUrl();
         Article updatedArticle =
-                this.articleService.update(slugId,
-                        articleRequest.toArticle(featuredImageUrl), user);
+                this.articleService.update(article,
+                        articleRequest.toArticle(featuredImageUrl));
         return ResponseEntity.ok(updatedArticle);
 
     }
 
+    private void verifyUser(@AuthenticationPrincipal User customUserDetails, User owner) {
+        if (!Objects.equals(this.articleService.getUser(customUserDetails), owner)) {
+            throw new ForbiddenOperationException("You are not allowed to "
+                    + "perform this operation");
+        }
+    }
+
+    @EditorOnly
     @PostMapping(path = "/{slug_id}/publish")
     public ResponseEntity<Article> publish(@PathVariable("slug_id") final String slugId) {
         boolean publish = this.articleService.publish(slugId);
@@ -116,10 +132,14 @@ public class ArticleResource {
         return new ResponseEntity<>(foundArticle, HttpStatus.OK);
     }
 
+    @AdminOnly
     @DeleteMapping(path = "/{slug_id}")
-    public ResponseEntity<Void> delete(@AuthenticationPrincipal User user,
+    public ResponseEntity<Void> delete(@AuthenticationPrincipal User customUserDetails,
                                        @PathVariable("slug_id") final String slugId) {
-        this.articleService.delete(slugId, user);
+
+        Article article = this.articleService.findById(slugId);
+       // verifyUser(customUserDetails, article.getUser());
+        this.articleService.delete(article);
         return ResponseEntity.noContent().build();
 
     }
@@ -127,6 +147,13 @@ public class ArticleResource {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @ExceptionHandler(MailException.class)
     void mailException(Exception ex) {
+        // log error
+    }
+
+
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    @ExceptionHandler(JDBCConnectionException.class)
+    void jdbcConnectionException(Exception ex) {
         // log error
     }
 

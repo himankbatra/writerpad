@@ -65,6 +65,8 @@ public class ArticleRequest {
                 .build();
     }
 
+
+
     @JsonPOJOBuilder
     public static final class Builder {
         private String title;
