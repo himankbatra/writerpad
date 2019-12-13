@@ -8,7 +8,6 @@ import net.ricecode.similarity.StringSimilarityServiceImpl;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
 @Service

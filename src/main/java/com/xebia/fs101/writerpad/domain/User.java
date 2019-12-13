@@ -116,7 +116,7 @@ public class User {
         this.username = other.username;
         this.email = other.email;
         this.password = other.password;
-        this.userRole=other.userRole;
+        this.userRole = other.userRole;
     }
 
     @Override
@@ -128,7 +128,6 @@ public class User {
                 + ", userRole='" + userRole + '\''
                 + '}';
     }
-
 
 
 }

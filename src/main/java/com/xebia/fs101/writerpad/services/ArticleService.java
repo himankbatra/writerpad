@@ -5,7 +5,6 @@ import com.xebia.fs101.writerpad.domain.Article;
 import com.xebia.fs101.writerpad.domain.ArticleStatus;
 import com.xebia.fs101.writerpad.domain.User;
 import com.xebia.fs101.writerpad.exceptions.ArticleNotFoundException;
-import com.xebia.fs101.writerpad.exceptions.ForbiddenOperationException;
 import com.xebia.fs101.writerpad.repositories.ArticleRepository;
 import com.xebia.fs101.writerpad.repositories.UserRepository;
 import com.xebia.fs101.writerpad.services.helpers.PlagiarismCheckerService;

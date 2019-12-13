@@ -2,43 +2,43 @@ package com.xebia.fs101.writerpad.services.clients;
 
 public class ImageResponse {
 
-   private String id;
-   private ImageUrl urls;
+    private String id;
+    private ImageUrl urls;
 
-   public static class ImageUrl{
-       private String raw;
-       private String full;
-       private String regular;
+    public static class ImageUrl {
+        private String raw;
+        private String full;
+        private String regular;
 
-       public String getRaw() {
-           return raw;
-       }
+        public String getRaw() {
+            return raw;
+        }
 
-       public void setRaw(String raw) {
-           this.raw = raw;
-       }
+        public void setRaw(String raw) {
+            this.raw = raw;
+        }
 
-       public String getFull() {
-           return full;
-       }
+        public String getFull() {
+            return full;
+        }
 
-       public void setFull(String full) {
-           this.full = full;
-       }
+        public void setFull(String full) {
+            this.full = full;
+        }
 
-       public String getRegular() {
-           return regular;
-       }
+        public String getRegular() {
+            return regular;
+        }
 
-       public void setRegular(String regular) {
-           this.regular = regular;
-       }
+        public void setRegular(String regular) {
+            this.regular = regular;
+        }
 
-       @Override
-       public String toString() {
-           return regular;
-       }
-   }
+        @Override
+        public String toString() {
+            return regular;
+        }
+    }
 
     public String getId() {
         return id;
@@ -59,9 +59,9 @@ public class ImageResponse {
 
     @Override
     public String toString() {
-        return "ImageResponse{" +
-                "id='" + id + '\'' +
-                ", imageUrl=" + urls +
-                '}';
+        return "ImageResponse{"
+                + "id='" + id + '\''
+                + ", imageUrl=" + urls
+                + '}';
     }
 }
