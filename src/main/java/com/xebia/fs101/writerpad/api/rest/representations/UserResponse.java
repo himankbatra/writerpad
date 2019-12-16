@@ -18,7 +18,7 @@ public class UserResponse {
         private UUID id;
         private String title;
 
-        public ArticleResponse(UUID id, String title) {
+         ArticleResponse(UUID id, String title) {
             this.id = id;
             this.title = title;
         }
@@ -75,7 +75,7 @@ public class UserResponse {
         private long followingCount;
         private List<ArticleResponse> articles;
 
-        public Builder() {
+         Builder() {
 
         }
 

@@ -6,7 +6,6 @@ import com.xebia.fs101.writerpad.domain.ArticleStatus;
 import com.xebia.fs101.writerpad.domain.User;
 import com.xebia.fs101.writerpad.exceptions.ArticleNotFoundException;
 import com.xebia.fs101.writerpad.repositories.ArticleRepository;
-import com.xebia.fs101.writerpad.repositories.UserRepository;
 import com.xebia.fs101.writerpad.services.helpers.PlagiarismCheckerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
@@ -16,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -59,8 +57,6 @@ public class ArticleService {
         return this.articleRepository.save(article.update(copyFrom));
 
     }
-
-
 
 
     public List<Article> findAll(String status, Pageable pageable) {
