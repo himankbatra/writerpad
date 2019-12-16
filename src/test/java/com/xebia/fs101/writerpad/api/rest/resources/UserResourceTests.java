@@ -15,12 +15,16 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -28,7 +32,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@WithMockUser
 class UserResourceTests {
 
     @Autowired
@@ -62,7 +65,7 @@ class UserResourceTests {
                     .build();
             userRepository.save(admin);
         }
-        }
+    }
 
 
     @AfterEach
@@ -99,7 +102,8 @@ class UserResourceTests {
     void should_give_bad_request_when_i_try_to_save_same_user_again() throws Exception {
 
         User user = new User.Builder()
-                .withEmail("abc@123.com").withPassword("abc@123").withUsername("abc").build();
+                .withEmail("abc@123.com").withPassword(passwordEncoder.encode("abc@123"))
+                .withUsername("abc").build();
 
         this.userRepository.save(user);
 
@@ -114,6 +118,55 @@ class UserResourceTests {
                         .content(json).with(httpBasic("admin", "password")))
                 .andDo(print())
                 .andExpect(status().isBadRequest());
+
+    }
+
+
+    @Test
+    void should_be_able_to_return_a_user_profile() throws Exception {
+
+        User user = new User.Builder()
+                .withEmail("abc@123.com").withPassword(passwordEncoder.encode("abc@123")).withUsername("abc").build();
+        User savedUser = this.userRepository.save(user);
+        this.mockMvc.perform(get("/api/profiles/{username}", savedUser.getUsername()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.username").value("abc"));
+    }
+
+    @Test
+    void should_be_able_to_follow_an_user() throws Exception {
+        User user1 = new User.Builder()
+                .withEmail("abc@123.com").withPassword(passwordEncoder.encode("abc@123")).withUsername("abc").build();
+        User user2 =  new User.Builder()
+                .withEmail("efg@123.com").withPassword(passwordEncoder.encode("efg@123")).withUsername("efg").build();
+        userRepository.saveAll(Arrays.asList(user1, user2));
+        this.mockMvc.perform(post("/api/profiles/{username}/follow", user2.getUsername())
+                .with(httpBasic("abc", "abc@123")))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.followerCount").value(1));
+        User abc = userRepository.findByUsernameOrEmail("abc",null);
+        assertThat(abc.getFollowingCount()).isEqualTo(1);
+        assertThat(abc.isFollowing()).isTrue();
+    }
+
+    @Test
+    void should_be_able_to_unFollow_an_user() throws Exception {
+        User user1 = new User.Builder()
+                .withEmail("abc@123.com").withPassword(passwordEncoder.encode("abc@123")).withUsername("abc").build();
+        User user2 =  new User.Builder()
+                .withEmail("efg@123.com").withPassword(passwordEncoder.encode("efg@123")).withUsername("efg").build();
+        userRepository.saveAll(Arrays.asList(user1, user2));
+        userRepository.save(user1);
+        userRepository.save(user2);
+
+        this.mockMvc.perform(delete("/api/profiles/{username}/unfollow", user2.getUsername())
+                .with(httpBasic("abc", "abc@123")))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.followingCount").value(0))
+                .andExpect(jsonPath("$.following").value(false));
+
 
     }
 

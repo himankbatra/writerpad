@@ -3,16 +3,21 @@ package com.xebia.fs101.writerpad.domain;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import javax.persistence.CollectionTable;
 import javax.persistence.Column;
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "users")
@@ -38,12 +43,48 @@ public class User {
     @Enumerated(EnumType.STRING)
     private UserRole userRole;
 
+    private boolean following = false;
+
+    private long followerCount = 0;
+
+    private long followingCount = 0;
+
+    @ElementCollection
+    @CollectionTable(name = "followers", joinColumns = @JoinColumn(name = "userid"))
+    private Set<String> followers;
+
+
     private User(Builder builder) {
         username = builder.username;
         email = builder.email;
         password = builder.password;
         userRole = builder.userRole;
+        following = builder.following;
+        followerCount = builder.followerCount;
+        followingCount = builder.followingCount;
+        followers = new HashSet<>();
     }
+
+    public void follow() {
+        this.following = true;
+        this.followingCount++;
+    }
+
+    public void addFollowers(String username) {
+        this.followers.add(username);
+        this.followerCount++;
+    }
+
+    public void unFollow() {
+        this.followingCount--;
+        this.following = this.followingCount != 0;
+    }
+
+    public void removeFollowers(String username) {
+        this.followers.remove(username);
+        this.followerCount--;
+    }
+
 
     public static final class Builder {
 
@@ -51,6 +92,10 @@ public class User {
         private String email;
         private String password;
         private UserRole userRole = UserRole.WRITER;
+        private boolean following = false;
+        private long followerCount = 0;
+        private long followingCount = 0;
+
 
         public Builder() {
         }
@@ -72,6 +117,21 @@ public class User {
 
         public Builder withUserRole(UserRole val) {
             userRole = val;
+            return this;
+        }
+
+        public Builder withFollowing(boolean val) {
+            following = val;
+            return this;
+        }
+
+        public Builder withFollowerCount(long val) {
+            followerCount = val;
+            return this;
+        }
+
+        public Builder withFollowingCount(long val) {
+            followingCount = val;
             return this;
         }
 
@@ -105,6 +165,22 @@ public class User {
 
     public UserRole getUserRole() {
         return userRole;
+    }
+
+    public boolean isFollowing() {
+        return following;
+    }
+
+    public long getFollowerCount() {
+        return followerCount;
+    }
+
+    public long getFollowingCount() {
+        return followingCount;
+    }
+
+    public Set<String> getFollowers() {
+        return followers;
     }
 
     public User() {

@@ -19,7 +19,6 @@ public class UserRequest {
     @Email(message = "Please Provide valid email")
     private final String email;
 
-
     @NotBlank(message = "Please Provide password")
     private final String password;
 

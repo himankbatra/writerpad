@@ -8,6 +8,7 @@ import com.xebia.fs101.writerpad.domain.Article;
 import com.xebia.fs101.writerpad.domain.User;
 import com.xebia.fs101.writerpad.exceptions.ForbiddenOperationException;
 import com.xebia.fs101.writerpad.services.ArticleService;
+import com.xebia.fs101.writerpad.services.UserService;
 import com.xebia.fs101.writerpad.services.clients.ImageGenerator;
 import com.xebia.fs101.writerpad.services.helpers.ReadingTime;
 import com.xebia.fs101.writerpad.services.helpers.ReadingTimeService;
@@ -50,6 +51,9 @@ public class ArticleResource {
     private ArticleService articleService;
 
     @Autowired
+    private UserService userService;
+
+    @Autowired
     private MailService mailService;
 
     @Autowired
@@ -57,6 +61,7 @@ public class ArticleResource {
 
     @Autowired
     private ImageGenerator imageGenerator;
+
 
     @WriterOnly
     @PostMapping
@@ -70,7 +75,7 @@ public class ArticleResource {
         Article savedArticle =
                 this.articleService.save(articleRequest
                                 .toArticle(featuredImageUrl),
-                        this.articleService.getUser(user));
+                        this.userService.get(user));
         return new ResponseEntity<>(ArticleResponse.from(savedArticle),
                 HttpStatus.CREATED);
 
@@ -95,7 +100,7 @@ public class ArticleResource {
     }
 
     private void verifyUser(@AuthenticationPrincipal User customUserDetails, User owner) {
-        if (!Objects.equals(this.articleService.getUser(customUserDetails), owner)) {
+        if (!Objects.equals(this.userService.get(customUserDetails), owner)) {
             throw new ForbiddenOperationException("You are not allowed to "
                     + "perform this operation");
         }

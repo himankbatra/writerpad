@@ -3,6 +3,7 @@ package com.xebia.fs101.writerpad.config;
 import com.xebia.fs101.writerpad.services.security.CustomUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -26,6 +27,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
             .and()
             .authorizeRequests()
                 .antMatchers("/").permitAll()
+                .antMatchers(HttpMethod.GET,"/api/profiles/{username}").permitAll()
             //  .antMatchers("/h2-console/**").permitAll()
            //     .antMatchers(HttpMethod.POST, "/api/users").permitAll()
                 .anyRequest().authenticated()

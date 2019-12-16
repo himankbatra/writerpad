@@ -29,8 +29,6 @@ public class ArticleService {
     @Autowired
     private ArticleRepository articleRepository;
 
-    @Autowired
-    private UserRepository userRepository;
 
     @Autowired
     private PlagiarismCheckerService plagiarismCheckerService;
@@ -62,11 +60,7 @@ public class ArticleService {
 
     }
 
-    public User getUser(User customUserDetails) {
-        Optional<User> foundUser =
-                this.userRepository.findById(customUserDetails.getUserid());
-        return foundUser.get();
-    }
+
 
 
     public List<Article> findAll(String status, Pageable pageable) {

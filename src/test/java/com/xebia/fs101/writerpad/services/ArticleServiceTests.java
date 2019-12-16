@@ -41,8 +41,6 @@ class ArticleServiceTests {
 
     @Mock
     private ArticleRepository articleRepository;
-    @Mock
-    private UserRepository userRepository;
 
     @Mock
     private PlagiarismCheckerService plagiarismCheckerService;
