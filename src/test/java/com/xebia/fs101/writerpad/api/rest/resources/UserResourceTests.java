@@ -2,6 +2,7 @@ package com.xebia.fs101.writerpad.api.rest.resources;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xebia.fs101.writerpad.api.rest.representations.UserRequest;
+import com.xebia.fs101.writerpad.domain.Article;
 import com.xebia.fs101.writerpad.domain.User;
 import com.xebia.fs101.writerpad.domain.UserRole;
 import com.xebia.fs101.writerpad.repositories.ArticleRepository;
@@ -128,17 +129,28 @@ class UserResourceTests {
         User user = new User.Builder()
                 .withEmail("abc@123.com").withPassword(passwordEncoder.encode("abc@123")).withUsername("abc").build();
         User savedUser = this.userRepository.save(user);
+        Article article = new Article.Builder().withTitle("title").withDescription(
+                "desc").withBody("body").build();
+        article.setUser(user);
+        article.publish();
+        articleRepository.save(article);
         this.mockMvc.perform(get("/api/profiles/{username}", savedUser.getUsername()))
+                .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.username").value("abc"));
+                .andExpect(jsonPath("$.username").value("abc"))
+        .andExpect(jsonPath("$.articles").hasJsonPath())
+        .andExpect(jsonPath("$..id").value(article.getId().toString()))
+        .andExpect(jsonPath("$..title").value("title"));
     }
 
     @Test
     void should_be_able_to_follow_an_user() throws Exception {
         User user1 = new User.Builder()
-                .withEmail("abc@123.com").withPassword(passwordEncoder.encode("abc@123")).withUsername("abc").build();
+                .withEmail("abc@123.com").withPassword(passwordEncoder.encode("abc@123")).withUsername("abc")
+                .withFollowingCount(9).build();
         User user2 =  new User.Builder()
-                .withEmail("efg@123.com").withPassword(passwordEncoder.encode("efg@123")).withUsername("efg").build();
+                .withEmail("efg@123.com").withPassword(passwordEncoder.encode("efg@123"))
+                .withUsername("efg").build();
         userRepository.saveAll(Arrays.asList(user1, user2));
         this.mockMvc.perform(post("/api/profiles/{username}/follow", user2.getUsername())
                 .with(httpBasic("abc", "abc@123")))
@@ -146,27 +158,30 @@ class UserResourceTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.followerCount").value(1));
         User abc = userRepository.findByUsernameOrEmail("abc",null);
-        assertThat(abc.getFollowingCount()).isEqualTo(1);
+        assertThat(abc.getFollowingCount()).isEqualTo(10);
         assertThat(abc.isFollowing()).isTrue();
     }
 
     @Test
     void should_be_able_to_unFollow_an_user() throws Exception {
         User user1 = new User.Builder()
-                .withEmail("abc@123.com").withPassword(passwordEncoder.encode("abc@123")).withUsername("abc").build();
+                .withEmail("abc@123.com").withPassword(passwordEncoder.encode("abc@123")).withUsername("abc")
+                .withFollowingCount(1).build();
         User user2 =  new User.Builder()
-                .withEmail("efg@123.com").withPassword(passwordEncoder.encode("efg@123")).withUsername("efg").build();
+                .withEmail("efg@123.com").withPassword(passwordEncoder.encode("efg@123"))
+                .withFollowerCount(9).withUsername("efg").build();
+        user2.addFollowers(user1.getUsername());
         userRepository.saveAll(Arrays.asList(user1, user2));
-        userRepository.save(user1);
-        userRepository.save(user2);
 
         this.mockMvc.perform(delete("/api/profiles/{username}/unfollow", user2.getUsername())
                 .with(httpBasic("abc", "abc@123")))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.followingCount").value(0))
+                .andExpect(jsonPath("$.followerCount").value(9))
                 .andExpect(jsonPath("$.following").value(false));
-
+        User abc = userRepository.findByUsernameOrEmail("abc",null);
+        assertThat(abc.getFollowingCount()).isEqualTo(0);
+        assertThat(abc.isFollowing()).isFalse();
 
     }
 

@@ -345,16 +345,7 @@ class ArticleResourceTests {
     @Test
     void should_delete_an_article() throws Exception {
 
-        User admin = userRepository.findByUsernameOrEmail("admin", "admin@123.com");
-        if (Objects.isNull(admin)) {
-            admin = new User.Builder()
-                    .withUsername("admin")
-                    .withEmail("admin@123.com")
-                    .withPassword(passwordEncoder.encode("password"))
-                    .withUserRole(UserRole.ADMIN)
-                    .build();
-            userRepository.save(admin);
-        }
+        createAdminUser();
         Article article = new Article.Builder()
                 .withTitle("spring")
                 .withBody("appl")
@@ -369,8 +360,7 @@ class ArticleResourceTests {
                 .andExpect(status().isNoContent());
     }
 
-    @Test
-    void should_not_delete_an_article() throws Exception {
+    private void createAdminUser() {
         User admin = userRepository.findByUsernameOrEmail("admin", "admin@123.com");
         if (Objects.isNull(admin)) {
             admin = new User.Builder()
@@ -381,6 +371,11 @@ class ArticleResourceTests {
                     .build();
             userRepository.save(admin);
         }
+    }
+
+    @Test
+    void should_not_delete_an_article() throws Exception {
+        createAdminUser();
         String id = "abc" + "-" + UUID.randomUUID().toString();
         this.mockMvc.perform(delete("/api/articles/{slug_id}", id).with(httpBasic("admin"
                 , "password"))
@@ -414,7 +409,7 @@ class ArticleResourceTests {
                 .withUserRole(UserRole.EDITOR)
                 .build();
         User editorUser = userEditorRequest.toUser(passwordEncoder);
-         userRepository.save(editorUser);
+        userRepository.save(editorUser);
 
         Article article = createArticle("Title", "Description", "body");
         Article saved = articleRepository.save(article);
@@ -649,5 +644,54 @@ class ArticleResourceTests {
                 .andDo(print())
                 .andExpect(status().isBadRequest());
     }
+
+    @Test
+    void admin_should_be_able_to_create_article_when_mandatory_request_data_is_provided() throws Exception {
+
+        createAdminUser();
+        ArticleRequest articleRequest = new ArticleRequest.Builder()
+                .withTitle("How to learn Spring Boot")
+                .withBody("You have to believe")
+                .withDescription("Ever wonder how?")
+                .build();
+        String json = objectMapper.writeValueAsString(articleRequest);
+
+        mockMvc.perform(
+                post("/api/articles")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json).with(httpBasic("admin", "password")))
+                .andDo(print())
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").isNotEmpty())
+                .andExpect(jsonPath("$.title").value("How to learn Spring Boot"))
+                .andExpect(jsonPath("$.slug").value("how-to-learn-spring-boot"))
+                .andExpect(jsonPath("$.description").value("Ever wonder how?"))
+                .andExpect(jsonPath("$.body").value("You have to believe"))
+                .andExpect(jsonPath("$.createdAt").isNotEmpty())
+                .andExpect(jsonPath("$.updatedAt").isNotEmpty())
+                .andExpect(jsonPath("$.favourited").isBoolean())
+                .andExpect(jsonPath("$.favourited").value(false))
+                .andExpect(jsonPath("$.favouritesCount").value(0))
+                .andExpect(jsonPath("$.status").value("DRAFT"))
+                .andExpect(jsonPath("$.featuredImageUrl").isNotEmpty())
+                .andExpect(jsonPath("$.featuredImageUrl").isString())
+                .andExpect(jsonPath("$.featuredImageUrl").value("test image"))
+                .andExpect(jsonPath("$.author").hasJsonPath())
+                .andExpect(jsonPath("$..username").value("admin"));
+    }
+
+    @Test
+    void admin_should_be_able_to_publish_an_article() throws Exception {
+        createAdminUser();
+        Article article = createArticle("Title", "Description", "body");
+        Article saved = articleRepository.save(article);
+        String slugId = String.format("%s-%s", saved.getSlug(), saved.getId());
+        this.mockMvc.perform(post("/api/articles/{slug_id}/publish", slugId).with(httpBasic("admin", "password")))
+                .andDo(print())
+                .andExpect(status().isNoContent());
+        assertThat(articleRepository.findById(article.getId())
+                .filter(a -> a.getStatus() == ArticleStatus.PUBLISH).isPresent()).isTrue();
+    }
+
 
 }

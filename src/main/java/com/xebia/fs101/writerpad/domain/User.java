@@ -205,5 +205,41 @@ public class User {
                 + '}';
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
 
+        User user = (User) o;
+
+        if (userid != user.userid) return false;
+        if (following != user.following) return false;
+        if (followerCount != user.followerCount) return false;
+        if (followingCount != user.followingCount) return false;
+        if (username != null ? !username.equals(user.username) : user.username != null)
+            return false;
+        if (email != null ? !email.equals(user.email) : user.email != null) return false;
+        if (password != null ? !password.equals(user.password) : user.password != null)
+            return false;
+        if (articles != null ? !articles.equals(user.articles) : user.articles != null)
+            return false;
+        if (userRole != user.userRole) return false;
+        return followers != null ? followers.equals(user.followers) :
+                user.followers == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = (int) (userid ^ (userid >>> 32));
+        result = 31 * result + (username != null ? username.hashCode() : 0);
+        result = 31 * result + (email != null ? email.hashCode() : 0);
+        result = 31 * result + (password != null ? password.hashCode() : 0);
+        result = 31 * result + (articles != null ? articles.hashCode() : 0);
+        result = 31 * result + (userRole != null ? userRole.hashCode() : 0);
+        result = 31 * result + (following ? 1 : 0);
+        result = 31 * result + (int) (followerCount ^ (followerCount >>> 32));
+        result = 31 * result + (int) (followingCount ^ (followingCount >>> 32));
+        result = 31 * result + (followers != null ? followers.hashCode() : 0);
+        return result;
+    }
 }
