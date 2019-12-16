@@ -224,8 +224,8 @@ public class User {
         if (articles != null ? !articles.equals(user.articles) : user.articles != null)
             return false;
         if (userRole != user.userRole) return false;
-        return followers != null ? followers.equals(user.followers) :
-                user.followers == null;
+        return followers != null ? followers.equals(user.followers)
+                : user.followers == null;
     }
 
     @Override
