@@ -19,7 +19,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -95,7 +94,8 @@ class UserResourceTests {
                 .andExpect(jsonPath("$.username").isNotEmpty())
                 .andExpect(jsonPath("$.email").isNotEmpty())
                 .andExpect(jsonPath("$.username").value("abc"))
-                .andExpect(jsonPath("$.email").value("abc@123.com"));
+                .andExpect(jsonPath("$.email").value("abc@123.com"))
+                .andExpect(jsonPath("$.following").value(false));
     }
 
 
@@ -138,17 +138,52 @@ class UserResourceTests {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.username").value("abc"))
-        .andExpect(jsonPath("$.articles").hasJsonPath())
-        .andExpect(jsonPath("$..id").value(article.getId().toString()))
-        .andExpect(jsonPath("$..title").value("title"));
+                .andExpect(jsonPath("$.articles").hasJsonPath())
+                .andExpect(jsonPath("$..id").value(article.getId().toString()))
+                .andExpect(jsonPath("$..title").value("title"))
+                .andExpect(jsonPath("$.following").value(false));
     }
+
+
+    @Test
+    void should_be_able_to_return_a_user_profile_with_following_true_if_login_user_is_following() throws Exception {
+
+        User user = new User.Builder()
+                .withEmail("abc@123.com").withPassword(passwordEncoder.encode("abc@123")).withUsername("abc").build();
+        User savedUser = this.userRepository.save(user);
+        Article article = new Article.Builder().withTitle("title").withDescription(
+                "desc").withBody("body").build();
+        article.setUser(user);
+        article.publish();
+        articleRepository.save(article);
+
+        User user2 = new User.Builder()
+                .withEmail("efg@123.com").withPassword(passwordEncoder.encode("efg@123"))
+                .withUsername("efg").build();
+        user2.follow();
+        User savedUser2 = this.userRepository.save(user2);
+        savedUser.addFollowers(user2.getUsername());
+        userRepository.save(user);
+
+        this.mockMvc.perform(get("/api/profiles/{username}", savedUser.getUsername())
+                .with(httpBasic("efg", "efg@123")))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.username").value("abc"))
+                .andExpect(jsonPath("$.articles").hasJsonPath())
+                .andExpect(jsonPath("$..id").value(article.getId().toString()))
+                .andExpect(jsonPath("$..title").value("title"))
+                .andExpect(jsonPath("$.following").value(true));
+
+    }
+
 
     @Test
     void should_be_able_to_follow_an_user() throws Exception {
         User user1 = new User.Builder()
                 .withEmail("abc@123.com").withPassword(passwordEncoder.encode("abc@123")).withUsername("abc")
                 .withFollowingCount(9).build();
-        User user2 =  new User.Builder()
+        User user2 = new User.Builder()
                 .withEmail("efg@123.com").withPassword(passwordEncoder.encode("efg@123"))
                 .withUsername("efg").build();
         userRepository.saveAll(Arrays.asList(user1, user2));
@@ -156,10 +191,11 @@ class UserResourceTests {
                 .with(httpBasic("abc", "abc@123")))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.followerCount").value(1));
-        User abc = userRepository.findByUsernameOrEmail("abc",null);
+                .andExpect(jsonPath("$.followerCount").value(1))
+                .andExpect(jsonPath("$.following").value(true));
+        User abc = userRepository.findByUsernameOrEmail("abc", null);
         assertThat(abc.getFollowingCount()).isEqualTo(10);
-        assertThat(abc.isFollowing()).isTrue();
+
     }
 
     @Test
@@ -167,19 +203,20 @@ class UserResourceTests {
         User user1 = new User.Builder()
                 .withEmail("abc@123.com").withPassword(passwordEncoder.encode("abc@123")).withUsername("abc")
                 .withFollowingCount(1).build();
-        User user2 =  new User.Builder()
+        User user2 = new User.Builder()
                 .withEmail("efg@123.com").withPassword(passwordEncoder.encode("efg@123"))
                 .withFollowerCount(9).withUsername("efg").build();
         user2.addFollowers(user1.getUsername());
         userRepository.saveAll(Arrays.asList(user1, user2));
 
-        this.mockMvc.perform(delete("/api/profiles/{username}/unfollow", user2.getUsername())
+        this.mockMvc.perform(delete("/api/profiles/{username}/unfollow",
+                user2.getUsername())
                 .with(httpBasic("abc", "abc@123")))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.followerCount").value(9))
                 .andExpect(jsonPath("$.following").value(false));
-        User abc = userRepository.findByUsernameOrEmail("abc",null);
+        User abc = userRepository.findByUsernameOrEmail("abc", null);
         assertThat(abc.getFollowingCount()).isEqualTo(0);
         assertThat(abc.isFollowing()).isFalse();
 

@@ -54,9 +54,15 @@ public class UserResource {
 
 
     @GetMapping("/profiles/{username}")
-    public ResponseEntity<UserResponse> get(@PathVariable(name = "username") String username) {
-
+    public ResponseEntity<UserResponse> get(@PathVariable(name = "username") String username,
+                                            @AuthenticationPrincipal User customUserDetails) {
         User user = userService.get(username);
+        if (!Objects.isNull(customUserDetails)) {
+            if (user.getFollowers()
+                    .contains(this.userService.get(customUserDetails).getUsername())) {
+                user.setFollowing(true);
+            }
+        }
         return new ResponseEntity<>(UserResponse.from(user), OK);
     }
 
@@ -71,6 +77,7 @@ public class UserResource {
             return ResponseEntity.status(BAD_REQUEST).build();
         }
         User userToBeFollowed = userService.follow(username, user);
+        userToBeFollowed.setFollowing(true);
         return new ResponseEntity<>(UserResponse.from(userToBeFollowed), OK);
     }
 

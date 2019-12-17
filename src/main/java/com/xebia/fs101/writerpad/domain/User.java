@@ -15,6 +15,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -43,6 +44,7 @@ public class User {
     @Enumerated(EnumType.STRING)
     private UserRole userRole;
 
+    @Transient
     private boolean following = false;
 
     private long followerCount = 0;
@@ -66,18 +68,21 @@ public class User {
     }
 
     public void follow() {
-        this.following = true;
         this.followingCount++;
     }
+
 
     public void addFollowers(String username) {
         this.followers.add(username);
         this.followerCount++;
     }
 
+    public void setFollowing(boolean following) {
+        this.following = following;
+    }
+
     public void unFollow() {
         this.followingCount--;
-        this.following = this.followingCount != 0;
     }
 
     public void removeFollowers(String username) {
@@ -201,7 +206,13 @@ public class User {
                 + "userid=" + userid
                 + ", username='" + username + '\''
                 + ", email='" + email + '\''
-                + ", userRole='" + userRole + '\''
+                + ", password='" + password + '\''
+                + ", articles=" + articles
+                + ", userRole=" + userRole
+                + ", following=" + following
+                + ", followerCount=" + followerCount
+                + ", followingCount=" + followingCount
+                + ", followers=" + followers
                 + '}';
     }
 
