@@ -1,0 +1,18 @@
+version: '3'
+services:
+  database:
+    image: "postgres"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: writerpad
+    ports:
+      - "5432:5432"
+  web:
+    build: .
+    ports:
+        - "8080:8080"
+    environment:
+       SPRING_DATASOURCE_URL: jdbc:postgresql://database:5432/writerpad
+    depends_on:
+       - database
