@@ -4,11 +4,10 @@ jobs: # a collection of steps
   
     docker: # run the steps with Docker
       - image: circleci/openjdk:8-jdk-stretch # ...with this image as the primary container; this is where all `steps` will run
-      - image: circleci/postgres:10.6-alpine
-    environment:
-      PGUSER: postgres
-      PGPASSWORD: root
-      PGDATABASE: writerpad
+      - image: circleci/postgres:12-alpine
+        environment:
+          POSTGRES_USER: postgres
+          POSTGRES_DB: writerpad
       #CODECOV_TOKEN: c5accb88-5112-4811-8ac4-d3e7c00797e3
 
     steps: # a collection of executable commands
