@@ -13,6 +13,10 @@ jobs: # a collection of steps
 
     steps: # a collection of executable commands
       - checkout
+      - run:
+          name: Setup postgresql user
+          command: |
+            sudo -u postgres psql -p 5432 -c "create database writerpad;"
       - run: ./mvnw clean install
 
         #Codecov integration
