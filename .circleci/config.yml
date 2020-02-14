@@ -6,9 +6,10 @@ jobs: # a collection of steps
       - image: circleci/openjdk:8-jdk-stretch # ...with this image as the primary container; this is where all `steps` will run
       - image: circleci/postgres:10.6-alpine
     environment:
-      #CODECOV_TOKEN: c5accb88-5112-4811-8ac4-d3e7c00797e3
       POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
       POSTGRES_DB: writerpad
+      #CODECOV_TOKEN: c5accb88-5112-4811-8ac4-d3e7c00797e3
 
     steps: # a collection of executable commands
       - checkout
