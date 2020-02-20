@@ -12,11 +12,15 @@ import com.xebia.fs101.writerpad.repositories.ArticleRepository;
 import com.xebia.fs101.writerpad.repositories.CommentRepository;
 import com.xebia.fs101.writerpad.repositories.UserRepository;
 import com.xebia.fs101.writerpad.services.ArticleService;
+import com.xebia.fs101.writerpad.services.security.CustomUserDetails;
+import com.xebia.fs101.writerpad.services.security.jwt.JwtTokenProvider;
 import org.hibernate.exception.JDBCConnectionException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.jdbc.EmbeddedDatabaseConnection;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
@@ -25,27 +29,15 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.isA;
+import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -77,7 +69,12 @@ class ArticleResourceTests {
     @Autowired
     private CommentRepository commentRepository;
 
+    @Autowired
+    private JwtTokenProvider jwtTokenProvider;
+
     private User user;
+
+    private String accessToken;
 
     @BeforeEach
     void setUp() {
@@ -88,6 +85,7 @@ class ArticleResourceTests {
                 .build();
         user = userRequest.toUser(passwordEncoder);
         userRepository.save(user);
+        accessToken = jwtTokenProvider.generateToken(new CustomUserDetails(user));
     }
 
     @AfterEach
@@ -112,10 +110,11 @@ class ArticleResourceTests {
                 .build();
         String json = objectMapper.writeValueAsString(articleRequest);
 
+
         mockMvc.perform(
                 post("/api/articles")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(json).with(httpBasic("abc", "abc@123")))
+                        .content(json).header("Authorization", "Bearer " + accessToken))
                 .andDo(print())
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").isNotEmpty())
@@ -153,7 +152,7 @@ class ArticleResourceTests {
         mockMvc.perform(
                 post("/api/articles")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(json).with(httpBasic("abc", "abc@123")))
+                        .content(json).content(json).header("Authorization", "Bearer " + accessToken))
                 .andDo(print())
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").isNotEmpty())
@@ -182,7 +181,7 @@ class ArticleResourceTests {
         mockMvc.perform(
                 post("/api/articles")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(json).with(httpBasic("abc", "abc@123")))
+                        .content(json).content(json).header("Authorization", "Bearer " + accessToken))
                 .andDo(print())
                 .andExpect(status().isBadRequest());
     }
@@ -198,7 +197,7 @@ class ArticleResourceTests {
         mockMvc.perform(
                 post("/api/articles")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(json).with(httpBasic("abc", "abc@123")))
+                        .content(json).content(json).header("Authorization", "Bearer " + accessToken))
                 .andDo(print())
                 .andExpect(status().isBadRequest());
     }
@@ -219,8 +218,7 @@ class ArticleResourceTests {
         mockMvc.perform(post("/api/articles")
                 .accept(MediaType.APPLICATION_JSON)
                 .content(json)
-                .contentType(MediaType.APPLICATION_JSON).with(httpBasic("abc", "abc@123"
-                )))
+                .contentType(MediaType.APPLICATION_JSON).content(json).header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isInternalServerError());
     }
 
@@ -244,7 +242,7 @@ class ArticleResourceTests {
         String json = objectMapper.writeValueAsString(articleRequest);
         this.mockMvc.perform(patch("/api/articles/{slug_id}", id)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(json).with(httpBasic("abc", "abc@123")))
+                .content(json).content(json).header("Authorization", "Bearer " + accessToken))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").isNotEmpty())
@@ -280,8 +278,7 @@ class ArticleResourceTests {
 
         mockMvc.perform(get("/api/articles/{slug_id}",
                 savedArticle.getSlug() + "-" + savedArticle.getId())
-                .contentType(MediaType.APPLICATION_JSON).with(httpBasic("abc", "abc@123"
-                )))
+                .contentType(MediaType.APPLICATION_JSON).header("Authorization", "Bearer " + accessToken))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").isNotEmpty())
@@ -305,7 +302,7 @@ class ArticleResourceTests {
         Article article2 = createArticle("Title2", "description2", "body2");
         Article article3 = createArticle("Title3", "description3", "body3");
         articleRepository.saveAll(Arrays.asList(article1, article2, article3));
-        this.mockMvc.perform(get("/api/articles").with(httpBasic("abc", "abc@123")))
+        this.mockMvc.perform(get("/api/articles").header("Authorization", "Bearer " + accessToken))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(3))
@@ -320,8 +317,7 @@ class ArticleResourceTests {
         Article article2 = createArticle("Title2", "description2", "body2");
         Article article3 = createArticle("Title3", "description3", "body3");
         articleRepository.saveAll(Arrays.asList(article1, article2, article3));
-        this.mockMvc.perform(get("/api/articles?page=0&size=1").with(httpBasic("abc",
-                "abc@123")))
+        this.mockMvc.perform(get("/api/articles?page=0&size=1").header("Authorization", "Bearer " + accessToken))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
@@ -344,7 +340,7 @@ class ArticleResourceTests {
     @Test
     void should_delete_an_article() throws Exception {
 
-        createAdminUser();
+        String adminAccessToken = createAdminUser();
         Article article = new Article.Builder()
                 .withTitle("spring")
                 .withBody("appl")
@@ -353,13 +349,12 @@ class ArticleResourceTests {
         article.setUser(user);
         Article savedArticle = articleRepository.save(article);
         String id = String.format("%s-%s", savedArticle.getSlug(), savedArticle.getId());
-        this.mockMvc.perform(delete("/api/articles/{slug_id}", id).with(httpBasic("admin"
-                , "password"))
-        ).andDo(print())
+        this.mockMvc.perform(delete("/api/articles/{slug_id}", id).header("Authorization", "Bearer " + adminAccessToken))
+                .andDo(print())
                 .andExpect(status().isNoContent());
     }
 
-    private void createAdminUser() {
+    private String createAdminUser() {
         User admin = userRepository.findByUsernameOrEmail("admin", "admin@123.com");
         if (Objects.isNull(admin)) {
             admin = new User.Builder()
@@ -370,15 +365,15 @@ class ArticleResourceTests {
                     .build();
             userRepository.save(admin);
         }
+        return this.jwtTokenProvider.generateToken(new CustomUserDetails(admin));
     }
 
     @Test
     void should_not_delete_an_article() throws Exception {
-        createAdminUser();
+        String adminAccessToken = createAdminUser();
         String id = "abc" + "-" + UUID.randomUUID().toString();
-        this.mockMvc.perform(delete("/api/articles/{slug_id}", id).with(httpBasic("admin"
-                , "password"))
-        ).andDo(print())
+        this.mockMvc.perform(delete("/api/articles/{slug_id}", id).header("Authorization", "Bearer " + adminAccessToken))
+        .andDo(print())
                 .andExpect(status().isNotFound());
     }
 
@@ -389,8 +384,7 @@ class ArticleResourceTests {
         Article article3 = createArticle("Title3", "description3", "body3")
                 .publish();
         articleRepository.saveAll(Arrays.asList(article1, article2, article3));
-        this.mockMvc.perform(get("/api/articles?status=DRAFT").with(httpBasic("abc",
-                "abc@123")))
+        this.mockMvc.perform(get("/api/articles?status=DRAFT").header("Authorization", "Bearer " + accessToken))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2))
@@ -410,10 +404,12 @@ class ArticleResourceTests {
         User editorUser = userEditorRequest.toUser(passwordEncoder);
         userRepository.save(editorUser);
 
+        String editorAccessToken = this.jwtTokenProvider.generateToken(new CustomUserDetails(editorUser));
+
         Article article = createArticle("Title", "Description", "body");
         Article saved = articleRepository.save(article);
         String slugId = String.format("%s-%s", saved.getSlug(), saved.getId());
-        this.mockMvc.perform(post("/api/articles/{slug_id}/publish", slugId).with(httpBasic("editor", "editor@123")))
+        this.mockMvc.perform(post("/api/articles/{slug_id}/publish", slugId).header("Authorization", "Bearer " + editorAccessToken))
                 .andDo(print())
                 .andExpect(status().isNoContent());
         assertThat(articleRepository.findById(article.getId())
@@ -430,10 +426,14 @@ class ArticleResourceTests {
                 .build();
         User editorUser = userEditorRequest.toUser(passwordEncoder);
         userRepository.save(editorUser);
+
+        String editorAccessToken = this.jwtTokenProvider.generateToken(new CustomUserDetails(editorUser));
+
+
         Article article = createArticle("Title", "Desc", "Body").publish();
         Article saved = articleRepository.save(article);
         String id = String.format("%s-%s", saved.getSlug(), saved.getId());
-        this.mockMvc.perform(post("/api/articles/{slugUuid}/publish", id).with(httpBasic("editor", "editor@123")))
+        this.mockMvc.perform(post("/api/articles/{slugUuid}/publish", id).header("Authorization", "Bearer " + editorAccessToken))
                 .andDo(print())
                 .andExpect(status().isBadRequest());
     }
@@ -445,7 +445,7 @@ class ArticleResourceTests {
                         .publish();
         Article saved = articleRepository.save(article);
         String id = String.format("%s-%s", saved.getSlug(), saved.getId());
-        this.mockMvc.perform(get("/api/articles/{slugUuid}/timetoread", id).with(httpBasic("abc", "abc@123")))
+        this.mockMvc.perform(get("/api/articles/{slugUuid}/timetoread", id).header("Authorization", "Bearer " + accessToken))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.articleId").isNotEmpty())
@@ -473,7 +473,7 @@ class ArticleResourceTests {
         article.setUser(user);
         article2.setUser(user);
         this.articleRepository.saveAll(Arrays.asList(article, article2));
-        this.mockMvc.perform(get("/api/articles/tags").with(httpBasic("abc", "abc@123")))
+        this.mockMvc.perform(get("/api/articles/tags").header("Authorization", "Bearer " + accessToken))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(3))
@@ -489,7 +489,7 @@ class ArticleResourceTests {
         Article article = createArticle("title", "desc", "body");
         Article saved = articleRepository.save(article);
         String id = String.format("%s-%s", saved.getSlug(), saved.getId());
-        this.mockMvc.perform(put("/api/articles/{slug_id}/favourite", id).with(httpBasic("abc", "abc@123")))
+        this.mockMvc.perform(put("/api/articles/{slug_id}/favourite", id).header("Authorization", "Bearer " + accessToken))
                 .andDo(print())
                 .andExpect(status().isNoContent());
         Optional<Article> articleFavouritesCount =
@@ -507,7 +507,7 @@ class ArticleResourceTests {
         article.favourite();
         Article saved = articleRepository.save(article);
         String id = String.format("%s-%s", saved.getSlug(), saved.getId());
-        this.mockMvc.perform(delete("/api/articles/{slug_id}/favourite", id).with(httpBasic("abc", "abc@123")))
+        this.mockMvc.perform(delete("/api/articles/{slug_id}/favourite", id).header("Authorization", "Bearer " + accessToken))
                 .andDo(print())
                 .andExpect(status().isNoContent());
         Optional<Article> articleFavouritesCount =
@@ -531,7 +531,7 @@ class ArticleResourceTests {
         article.setUser(user);
         Article saved = articleRepository.save(article);
         String id = String.format("%s-%s", saved.getSlug(), saved.getId());
-        this.mockMvc.perform(delete("/api/articles/{slug_id}/favourite", id).with(httpBasic("abc", "abc@123")))
+        this.mockMvc.perform(delete("/api/articles/{slug_id}/favourite", id).header("Authorization", "Bearer " + accessToken))
                 .andDo(print())
                 .andExpect(status().isNoContent());
         Optional<Article> articleFavouritesCount =
@@ -565,9 +565,12 @@ class ArticleResourceTests {
                         "@123.com").build();
         User user1 = userRequest1.toUser(passwordEncoder);
         userRepository.save(user1);
+
+        String accessToken1 = this.jwtTokenProvider.generateToken(new CustomUserDetails(user1));
+
         this.mockMvc.perform(patch("/api/articles/{slug_uuid}", id)
                 .contentType(MediaType.APPLICATION_JSON).content(json)
-                .with(httpBasic("abc1", "abc1@123")))
+                .header("Authorization", "Bearer " + accessToken1))
                 .andDo(print())
                 .andExpect(status().isForbidden());
     }
@@ -583,7 +586,7 @@ class ArticleResourceTests {
         this.mockMvc.perform(post("/api/articles")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(json)
-                .with(httpBasic("abc", "abc@123")))
+                .header("Authorization", "Bearer " + accessToken))
                 .andDo(print())
                 .andExpect(status().isBadRequest());
     }
@@ -599,7 +602,7 @@ class ArticleResourceTests {
         this.mockMvc.perform(patch("/api/articles/{slug_id}", id)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(json)
-                .with(httpBasic("abc", "abc@123")))
+                .header("Authorization", "Bearer " + accessToken))
                 .andDo(print())
                 .andExpect(status().isOk());
     }
@@ -617,7 +620,7 @@ class ArticleResourceTests {
         this.mockMvc.perform(patch("/api/articles/{slug_id}", id)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(json)
-                .with(httpBasic("abc", "abc@123")))
+                .header("Authorization", "Bearer " + accessToken))
                 .andDo(print())
                 .andExpect(status().isBadRequest());
     }
@@ -625,7 +628,7 @@ class ArticleResourceTests {
     @Test
     void admin_should_be_able_to_create_article_when_mandatory_request_data_is_provided() throws Exception {
 
-        createAdminUser();
+        String adminAccessToken = createAdminUser();
         ArticleRequest articleRequest = new ArticleRequest.Builder()
                 .withTitle("How to learn Spring Boot")
                 .withBody("You have to believe")
@@ -636,7 +639,7 @@ class ArticleResourceTests {
         mockMvc.perform(
                 post("/api/articles")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(json).with(httpBasic("admin", "password")))
+                        .content(json) .header("Authorization", "Bearer " + adminAccessToken))
                 .andDo(print())
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").isNotEmpty())
@@ -659,11 +662,11 @@ class ArticleResourceTests {
 
     @Test
     void admin_should_be_able_to_publish_an_article() throws Exception {
-        createAdminUser();
+        String adminAccessToken = createAdminUser();
         Article article = createArticle("Title", "Description", "body");
         Article saved = articleRepository.save(article);
         String slugId = String.format("%s-%s", saved.getSlug(), saved.getId());
-        this.mockMvc.perform(post("/api/articles/{slug_id}/publish", slugId).with(httpBasic("admin", "password")))
+        this.mockMvc.perform(post("/api/articles/{slug_id}/publish", slugId) .header("Authorization", "Bearer " + adminAccessToken))
                 .andDo(print())
                 .andExpect(status().isNoContent());
         assertThat(articleRepository.findById(article.getId())

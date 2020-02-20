@@ -8,6 +8,8 @@ import com.xebia.fs101.writerpad.domain.UserRole;
 import com.xebia.fs101.writerpad.repositories.ArticleRepository;
 import com.xebia.fs101.writerpad.repositories.CommentRepository;
 import com.xebia.fs101.writerpad.repositories.UserRepository;
+import com.xebia.fs101.writerpad.services.security.CustomUserDetails;
+import com.xebia.fs101.writerpad.services.security.jwt.JwtTokenProvider;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -52,6 +54,10 @@ class UserResourceTests {
     @Autowired
     private CommentRepository commentRepository;
 
+    private String accessToken;
+
+    @Autowired
+    private JwtTokenProvider jwtTokenProvider;
 
     @BeforeEach
     void setUp() {
@@ -64,6 +70,7 @@ class UserResourceTests {
                     .withUserRole(UserRole.ADMIN)
                     .build();
             userRepository.save(admin);
+            accessToken = jwtTokenProvider.generateToken(new CustomUserDetails(admin));
         }
     }
 
@@ -87,7 +94,7 @@ class UserResourceTests {
         mockMvc.perform(
                 post("/api/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(json).with(httpBasic("admin", "password")))
+                        .content(json).header("Authorization", "Bearer " + accessToken))
                 .andDo(print())
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.userid").isNotEmpty())
@@ -116,7 +123,7 @@ class UserResourceTests {
         mockMvc.perform(
                 post("/api/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(json).with(httpBasic("admin", "password")))
+                        .content(json).header("Authorization", "Bearer " + accessToken))
                 .andDo(print())
                 .andExpect(status().isBadRequest());
 
@@ -165,8 +172,9 @@ class UserResourceTests {
         savedUser.addFollowers(user2.getUsername());
         userRepository.save(user);
 
+        String user2AccessToken = this.jwtTokenProvider.generateToken(new CustomUserDetails(user2));
         this.mockMvc.perform(get("/api/profiles/{username}", savedUser.getUsername())
-                .with(httpBasic("efg", "efg@123")))
+                .header("Authorization", "Bearer " + user2AccessToken))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.username").value("abc"))
@@ -187,8 +195,10 @@ class UserResourceTests {
                 .withEmail("efg@123.com").withPassword(passwordEncoder.encode("efg@123"))
                 .withUsername("efg").build();
         userRepository.saveAll(Arrays.asList(user1, user2));
+
+        String user1AccessToken = this.jwtTokenProvider.generateToken(new CustomUserDetails(user1));
         this.mockMvc.perform(post("/api/profiles/{username}/follow", user2.getUsername())
-                .with(httpBasic("abc", "abc@123")))
+                .header("Authorization", "Bearer " + user1AccessToken))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.followerCount").value(1))
@@ -208,10 +218,11 @@ class UserResourceTests {
                 .withFollowerCount(9).withUsername("efg").build();
         user2.addFollowers(user1.getUsername());
         userRepository.saveAll(Arrays.asList(user1, user2));
+        String user1AccessToken = this.jwtTokenProvider.generateToken(new CustomUserDetails(user1));
 
         this.mockMvc.perform(delete("/api/profiles/{username}/unfollow",
                 user2.getUsername())
-                .with(httpBasic("abc", "abc@123")))
+                .header("Authorization", "Bearer " + user1AccessToken))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.followerCount").value(9))

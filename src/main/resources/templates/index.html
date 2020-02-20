@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="https://www.thymeleaf.org">
+<head>
+    <meta charset="ISO-8859-1">
+    <title>Main Page</title>
+</head>
+<body ng-app="writerpad">
+<hr/>
+<div class="container" ng-controller="WriterpadController">
+
+
+    <!--   <div ng-show="decodedJwt.ROLE=='ADMIN'">-->
+    <div th:if="${ROLE == 'ROLE_ADMIN' }">
+        <h1>User :</h1>
+        <br/>
+        <br/>
+        <div class="row">
+            <label>User</label> <input type="text" ng-model="userDto.username" class="input-sm spacing"/>
+            <label>Password</label> <input type="text" ng-model="userDto.password" class="input-sm spacing"/>
+            <label>Email</label> <input type="text" ng-model="userDto.email" class="input-sm custom-width spacing"/>
+            <label>Role</label> <input type="text" ng-model="userDto.role" class="input-sm custom-width spacing"/>
+            <button ng-click="saveUser()" class="btn btn-sm btn-info">Save User</button>
+        </div>
+    </div>
+    <hr/>
+    <h1>Article :</h1>
+    <br/>
+    <br/>
+    <div class="row">
+        <label>Title</label> <input type="text" ng-model="articleDto.title" class="input-sm spacing"/>
+        <label>Description</label> <input type="text" ng-model="articleDto.description"
+                                          class="input-sm custom-width spacing"/>
+        <label>Body</label> <input type="text" ng-model="articleDto.body" class="input-sm custom-width spacing"/>
+        <label>Tag</label> <input type="text" ng-model="articleDto.tag" ng-list class="input-sm custom-width spacing"/>
+        <br/>
+        <br/>
+        <label>FeaturedImageUrl</label> <input type="text" ng-model="articleDto.featuredImageUrl"
+                                               class="input-sm custom-width spacing"/>
+        <button ng-click="saveArticle()" class="btn btn-sm btn-info">Save Article</button>
+    </div>
+    <hr/>
+
+
+    <div class="row">
+        <pre id="default-spacing">{{ allArticles | json }}</pre>
+    </div>
+    <hr/>
+
+</div>
+</body>
+<script src="js/lib/angular.min.js"></script>
+<script src="js/lib/angular-jwt.min.js"></script>
+<script src="js/lib/angular-cookies.min.js"></script>
+<script src="js/lib/ui-bootstrap-tpls-2.5.0.min.js"></script>
+<script src="js/app/app.js"></script>
+<script src="js/app/WriterpadController.js"></script>
+<script src="js/app/WriterpadService.js"></script>
+<link rel="stylesheet" href="css/lib/bootstrap.min.css"/>
+<link rel="stylesheet" href="css/app/app.css"/>
+</html>

@@ -11,6 +11,8 @@ import com.xebia.fs101.writerpad.domain.User;
 import com.xebia.fs101.writerpad.repositories.ArticleRepository;
 import com.xebia.fs101.writerpad.repositories.CommentRepository;
 import com.xebia.fs101.writerpad.repositories.UserRepository;
+import com.xebia.fs101.writerpad.services.security.CustomUserDetails;
+import com.xebia.fs101.writerpad.services.security.jwt.JwtTokenProvider;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,6 +21,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Arrays;
@@ -55,7 +58,12 @@ class CommentResourceTests {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private JwtTokenProvider jwtTokenProvider;
+
     private User user;
+
+    private String accessToken;
 
     @BeforeEach
     void setUp() {
@@ -66,6 +74,7 @@ class CommentResourceTests {
                 .build();
         user = userRequest.toUser(passwordEncoder);
         userRepository.save(user);
+        accessToken = jwtTokenProvider.generateToken(new CustomUserDetails(user));
     }
 
     @AfterEach
@@ -93,7 +102,7 @@ class CommentResourceTests {
         mockMvc.perform(
                 post("/api/articles/{slug_id}/comments", id)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(json).with(httpBasic("abc", "abc@123")))
+                        .content(json).header("Authorization", "Bearer " + accessToken))
                 .andDo(print())
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").isNotEmpty())
@@ -122,7 +131,7 @@ class CommentResourceTests {
         mockMvc.perform(
                 post("/api/articles/{slug_id}/comments", id)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(json).with(httpBasic("abc", "abc@123")))
+                        .content(json).header("Authorization", "Bearer " + accessToken))
                 .andDo(print())
                 .andExpect(status().isBadRequest());
     }
@@ -145,7 +154,7 @@ class CommentResourceTests {
         String json = objectMapper.writeValueAsString(commentRequest);
         mockMvc.perform(post("/api/articles/{slug_id}/comments", slugId)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(json).with(httpBasic("abc", "abc@123")))
+                .content(json).header("Authorization", "Bearer " + accessToken))
                 .andDo(print())
                 .andExpect(status().isBadRequest());
     }
@@ -165,7 +174,7 @@ class CommentResourceTests {
         Comment comment3 = new Comment("Comment3", "10.1.1.1", article);
         commentRepository.saveAll(Arrays.asList(comment1, comment2, comment3));
         this.mockMvc.perform(get("/api/articles/{slug_id}/comments", id)
-                .with(httpBasic("abc", "abc@123")))
+                .header("Authorization", "Bearer " + accessToken))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(3));
@@ -185,7 +194,7 @@ class CommentResourceTests {
         Comment savedComment = commentRepository.save(comment);
         Long commentId = savedComment.getId();
         mockMvc.perform(delete("/api/articles/{slug_id}/comments/{comment_id}", id,
-                commentId).with(httpBasic("abc", "abc@123")))
+                commentId).header("Authorization", "Bearer " + accessToken))
                 .andDo(print())
                 .andExpect(status().isNoContent());
     }
@@ -204,7 +213,7 @@ class CommentResourceTests {
         Comment savedComment = commentRepository.save(comment);
         Long commentId = savedComment.getId();
         mockMvc.perform(delete("/api/articles/{slug_id}/comments/{comment_id}", id,
-                commentId).with(httpBasic("abc", "abc@123")))
+                commentId).header("Authorization", "Bearer " + accessToken))
                 .andDo(print())
                 .andExpect(status().isNotFound());
     }
