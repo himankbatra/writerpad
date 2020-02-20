@@ -25,13 +25,15 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
     private JwtTokenProvider jwtTokenProvider;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
+                                    FilterChain filterChain) throws ServletException, IOException {
 
         final Optional<String> jwt = jwtTokenProvider.getToken(request);
         jwt.ifPresent(token -> {
             try {
                 if (jwtTokenProvider.validateToken(token)) {
-                    setSecurityContext(new WebAuthenticationDetailsSource().buildDetails(request), token);
+                    setSecurityContext(new WebAuthenticationDetailsSource().buildDetails(request),
+                            token);
                 }
             } catch (IllegalArgumentException | MalformedJwtException | ExpiredJwtException e) {
                 logger.error("Unable to get JWT Token or JWT Token has expired");
@@ -42,7 +44,8 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private void setSecurityContext(WebAuthenticationDetails authDetails, String token) {
-        final UsernamePasswordAuthenticationToken authentication = this.jwtTokenProvider.getAuthentication(token);
+        final UsernamePasswordAuthenticationToken authentication =
+                this.jwtTokenProvider.getAuthentication(token);
         authentication.setDetails(authDetails);
         SecurityContextHolder.getContext().setAuthentication(authentication);
     }

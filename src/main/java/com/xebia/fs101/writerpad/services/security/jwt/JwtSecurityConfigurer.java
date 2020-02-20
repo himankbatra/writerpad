@@ -8,7 +8,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.stereotype.Component;
 
 @Component
-public class JwtSecurityConfigurer extends SecurityConfigurerAdapter<DefaultSecurityFilterChain, HttpSecurity> {
+public class JwtSecurityConfigurer extends
+        SecurityConfigurerAdapter<DefaultSecurityFilterChain, HttpSecurity> {
 
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
@@ -24,6 +25,7 @@ public class JwtSecurityConfigurer extends SecurityConfigurerAdapter<DefaultSecu
         http.exceptionHandling()
                 .authenticationEntryPoint(jwtAuthenticationEntryPoint)
                 .and()
-                .addFilterBefore(jwtTokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtTokenAuthenticationFilter,
+                        UsernamePasswordAuthenticationFilter.class);
     }
 }
