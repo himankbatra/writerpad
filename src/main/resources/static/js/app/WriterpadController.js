@@ -28,7 +28,7 @@ module.controller("WriterpadController", [ "$scope", "WriterpadService","jwtHelp
             				title : null,
             				description : null,
             				body : null,
-            				tag : null,
+            				tags : null,
             				featuredImageUrl : null
             			};
 
@@ -80,7 +80,7 @@ module.controller("WriterpadController", [ "$scope", "WriterpadService","jwtHelp
                   				title : null,
                   				description : null,
                   				body : null,
-                  				tag : null,
+                  				tags : null,
                   				featuredImageUrl : null
                   			};
             				}, function(reason) {
