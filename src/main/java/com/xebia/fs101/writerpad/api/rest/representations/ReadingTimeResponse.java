@@ -2,6 +2,8 @@ package com.xebia.fs101.writerpad.api.rest.representations;
 
 import com.xebia.fs101.writerpad.services.helpers.ReadingTime;
 
+import java.time.Duration;
+
 public class ReadingTimeResponse {
 
     private String articleId;
@@ -16,8 +18,9 @@ public class ReadingTimeResponse {
         return readingTime;
     }
 
-    public ReadingTimeResponse(String articleId, ReadingTime readingTime) {
+    public ReadingTimeResponse(String articleId, Duration readingTime) {
         this.articleId = articleId;
-        this.readingTime = readingTime;
+        this.readingTime =
+                new ReadingTime((int) readingTime.toMinutes(), (int) readingTime.getSeconds());
     }
 }

@@ -10,7 +10,6 @@ import com.xebia.fs101.writerpad.exceptions.ForbiddenOperationException;
 import com.xebia.fs101.writerpad.services.ArticleService;
 import com.xebia.fs101.writerpad.services.UserService;
 import com.xebia.fs101.writerpad.services.clients.ImageGenerator;
-import com.xebia.fs101.writerpad.services.helpers.ReadingTime;
 import com.xebia.fs101.writerpad.services.helpers.ReadingTimeService;
 import com.xebia.fs101.writerpad.services.mail.MailService;
 import com.xebia.fs101.writerpad.services.security.AdminOnly;
@@ -37,6 +36,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
+import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -165,7 +165,7 @@ public class ArticleResource {
     @GetMapping(path = "/{slug_id}/timetoread")
     public ResponseEntity<ReadingTimeResponse> timeToRead(@PathVariable("slug_id") String slugId) {
         Article article = this.articleService.findById(slugId);
-        ReadingTime readingTime =
+        Duration readingTime =
                 this.readingTimeService.calculateReadingTime(article.getBody());
         return ResponseEntity.ok(new ReadingTimeResponse(slugId
                 , readingTime));

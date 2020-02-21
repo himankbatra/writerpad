@@ -4,6 +4,8 @@ import com.xebia.fs101.writerpad.services.helpers.ReadingTime;
 import com.xebia.fs101.writerpad.services.helpers.ReadingTimeService;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -14,8 +16,8 @@ class ReadingTimeServiceTests {
     @Test
     void should_get_reading_time_when_i_provide_valid_data() {
         ReadingTimeService readingTimeService = new ReadingTimeService(3);
-        ReadingTime readingTime = readingTimeService.calculateReadingTime("a b c");
-        assertThat(readingTime).isEqualToComparingFieldByField(new ReadingTime(0, 1));
+        Duration readingTime = readingTimeService.calculateReadingTime("a b c");
+        assertThat(readingTime).isEqualTo(Duration.ofSeconds(1));
 
     }
 
@@ -24,8 +26,8 @@ class ReadingTimeServiceTests {
         ReadingTimeService readingTimeService = new ReadingTimeService(1);
         String content =
                 IntStream.rangeClosed(1, 63).mapToObj(i -> "" + i).collect(Collectors.joining(" "));
-        ReadingTime readingTime = readingTimeService.calculateReadingTime(content);
-        assertThat(readingTime).isEqualToComparingFieldByField(new ReadingTime(1, 3));
+        Duration readingTime = readingTimeService.calculateReadingTime(content);
+        assertThat(readingTime).isEqualTo(Duration.ofMinutes(1).plusSeconds(3));
 
     }
 }
