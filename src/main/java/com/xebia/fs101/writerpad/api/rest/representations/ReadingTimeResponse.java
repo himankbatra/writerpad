@@ -21,6 +21,8 @@ public class ReadingTimeResponse {
     public ReadingTimeResponse(String articleId, Duration readingTime) {
         this.articleId = articleId;
         this.readingTime =
-                new ReadingTime((int) readingTime.toMinutes(), (int) readingTime.getSeconds());
+                new ReadingTime((int) readingTime.toMinutes(), (int) readingTime
+                        .minusMinutes(readingTime.toMinutes())
+                        .getSeconds());
     }
 }
