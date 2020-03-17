@@ -1,5 +1,6 @@
 package com.xebia.fs101.writerpad.api.rest.resources;
 
+import com.fasterxml.jackson.databind.annotation.NoClass;
 import com.xebia.fs101.writerpad.api.rest.representations.ArticleRequest;
 import com.xebia.fs101.writerpad.api.rest.representations.ArticleResponse;
 import com.xebia.fs101.writerpad.api.rest.representations.ReadingTimeResponse;
@@ -108,7 +109,7 @@ public class ArticleResource {
 
     @EditorOnly
     @PostMapping(path = "/{slug_id}/publish")
-    public ResponseEntity<Article> publish(@PathVariable("slug_id") final String slugId) {
+    public ResponseEntity<Void> publish(@PathVariable("slug_id") final String slugId) {
         boolean publish = this.articleService.publish(slugId);
         if (!publish) {
             return ResponseEntity.badRequest().build();
