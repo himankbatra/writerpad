@@ -13,13 +13,14 @@ import java.util.Objects;
 @Profile("!test")
 public class ImageGeneratorClient implements ImageGenerator {
 
-    @Value("${imageApiUrl.url}")
+
     private String imageApiUrl;
 
     private RestTemplate restTemplate;
 
-    public ImageGeneratorClient(RestTemplateBuilder restTemplateBuilder) {
+    public ImageGeneratorClient(RestTemplateBuilder restTemplateBuilder, @Value("${imageApiUrl.url}") String imageApiUrl) {
         this.restTemplate = restTemplateBuilder.build();
+        this.imageApiUrl = imageApiUrl;
     }
 
     @Override
