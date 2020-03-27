@@ -18,7 +18,8 @@ public class ImageGeneratorClient implements ImageGenerator {
 
     private RestTemplate restTemplate;
 
-    public ImageGeneratorClient(RestTemplateBuilder restTemplateBuilder, @Value("${imageApiUrl.url}") String imageApiUrl) {
+    public ImageGeneratorClient(RestTemplateBuilder restTemplateBuilder
+            , @Value("${imageApiUrl.url}") String imageApiUrl) {
         this.restTemplate = restTemplateBuilder.build();
         this.imageApiUrl = imageApiUrl;
     }
