@@ -57,6 +57,10 @@ public class ImageResponse {
         this.urls = urls;
     }
 
+    public ImageUrl getUrls() {
+        return urls;
+    }
+
     @Override
     public String toString() {
         return "ImageResponse{"
