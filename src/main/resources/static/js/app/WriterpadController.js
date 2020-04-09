@@ -21,7 +21,7 @@ module.controller("WriterpadController", [ "$scope", "WriterpadService","jwtHelp
 				username : null,
 				password : null,
 				email : null,
-				role : null
+				userRole : null
 			};
 
 				$scope.articleDto = {
@@ -55,7 +55,7 @@ module.controller("WriterpadController", [ "$scope", "WriterpadService","jwtHelp
     				username : null,
     				password : null,
     				email : null,
-    				role : null
+    				userRole : null
     			};
 				}, function(reason) {
 					console.log("error occured");

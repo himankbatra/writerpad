@@ -70,8 +70,8 @@ class UserResourceTests {
                     .withUserRole(UserRole.ADMIN)
                     .build();
             userRepository.save(admin);
-            accessToken = jwtTokenProvider.generateToken(new CustomUserDetails(admin));
         }
+        accessToken = jwtTokenProvider.generateToken(new CustomUserDetails(admin));
     }
 
 

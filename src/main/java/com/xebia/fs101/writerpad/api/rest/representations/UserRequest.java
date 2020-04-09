@@ -22,7 +22,7 @@ public class UserRequest {
     @NotBlank(message = "Please Provide password")
     private final String password;
 
-    private UserRole userRole;
+    private final UserRole userRole;
 
 
     private UserRequest(Builder builder) {
