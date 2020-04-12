@@ -63,7 +63,7 @@ class ArticleServiceTests {
         article.setUser(user);
         articleService.save(article, user);
         verify(articleRepository).findAll();
-       verify(plagiarismCheckerService).checkPlagiarism(anyString(),any());
+        verify(plagiarismCheckerService).checkPlagiarism(anyString(),any());
         verify(articleRepository).save(article);
         Article articleWithStatusDraft =
                 new Article.Builder().withBody("body")

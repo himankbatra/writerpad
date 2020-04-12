@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -34,7 +35,15 @@ public class ArticleService {
     public Article save(Article article, User user) {
         Stream<String> targetStream =
                 this.articleRepository.findAll().parallelStream().map(Article::getBody);
-        this.plagiarismCheckerService.checkPlagiarism(article.getBody(), targetStream);
+        CompletableFuture.supplyAsync(() -> targetStream)
+                .exceptionally((exception) -> {
+                    exception.printStackTrace();
+                    return Stream.empty();
+                })
+                .thenAcceptAsync(articlesBody ->
+                        this.plagiarismCheckerService.checkPlagiarism(article.getBody(), articlesBody))
+                .join();
+        //this.plagiarismCheckerService.checkPlagiarism(article.getBody(), targetStream);
         article.setUser(user);
         return this.articleRepository.save(article);
 
@@ -53,7 +62,15 @@ public class ArticleService {
         Stream<String> targetStream =
                 this.articleRepository.findAll().parallelStream()
                         .filter(a -> a.getId() != article.getId()).map(Article::getBody);
-        this.plagiarismCheckerService.checkPlagiarism(copyFrom.getBody(), targetStream);
+        CompletableFuture.supplyAsync(() -> targetStream)
+                .exceptionally((exception) -> {
+                    exception.printStackTrace();
+                    return Stream.empty();
+                })
+                .thenAcceptAsync(articlesBody ->
+                        this.plagiarismCheckerService.checkPlagiarism(copyFrom.getBody(), articlesBody))
+                .join();
+        //this.plagiarismCheckerService.checkPlagiarism(copyFrom.getBody(), targetStream);
         return this.articleRepository.save(article.update(copyFrom));
 
     }

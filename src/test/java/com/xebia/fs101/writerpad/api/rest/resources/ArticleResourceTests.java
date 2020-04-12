@@ -19,8 +19,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.jdbc.EmbeddedDatabaseConnection;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
@@ -36,7 +34,6 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -373,7 +370,7 @@ class ArticleResourceTests {
         String adminAccessToken = createAdminUser();
         String id = "abc" + "-" + UUID.randomUUID().toString();
         this.mockMvc.perform(delete("/api/articles/{slug_id}", id).header("Authorization", "Bearer " + adminAccessToken))
-        .andDo(print())
+                .andDo(print())
                 .andExpect(status().isNotFound());
     }
 
@@ -639,7 +636,7 @@ class ArticleResourceTests {
         mockMvc.perform(
                 post("/api/articles")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(json) .header("Authorization", "Bearer " + adminAccessToken))
+                        .content(json).header("Authorization", "Bearer " + adminAccessToken))
                 .andDo(print())
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").isNotEmpty())
@@ -666,7 +663,7 @@ class ArticleResourceTests {
         Article article = createArticle("Title", "Description", "body");
         Article saved = articleRepository.save(article);
         String slugId = String.format("%s-%s", saved.getSlug(), saved.getId());
-        this.mockMvc.perform(post("/api/articles/{slug_id}/publish", slugId) .header("Authorization", "Bearer " + adminAccessToken))
+        this.mockMvc.perform(post("/api/articles/{slug_id}/publish", slugId).header("Authorization", "Bearer " + adminAccessToken))
                 .andDo(print())
                 .andExpect(status().isNoContent());
         assertThat(articleRepository.findById(article.getId())
