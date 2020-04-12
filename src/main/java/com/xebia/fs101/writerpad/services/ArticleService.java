@@ -41,7 +41,8 @@ public class ArticleService {
                     return Stream.empty();
                 })
                 .thenAcceptAsync(articlesBody ->
-                        this.plagiarismCheckerService.checkPlagiarism(article.getBody(), articlesBody))
+                        this.plagiarismCheckerService
+                                .checkPlagiarism(article.getBody(), articlesBody))
                 .join();
         //this.plagiarismCheckerService.checkPlagiarism(article.getBody(), targetStream);
         article.setUser(user);
@@ -68,7 +69,8 @@ public class ArticleService {
                     return Stream.empty();
                 })
                 .thenAcceptAsync(articlesBody ->
-                        this.plagiarismCheckerService.checkPlagiarism(copyFrom.getBody(), articlesBody))
+                        this.plagiarismCheckerService
+                                .checkPlagiarism(copyFrom.getBody(), articlesBody))
                 .join();
         //this.plagiarismCheckerService.checkPlagiarism(copyFrom.getBody(), targetStream);
         return this.articleRepository.save(article.update(copyFrom));
