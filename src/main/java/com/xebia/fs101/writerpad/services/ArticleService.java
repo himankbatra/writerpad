@@ -7,6 +7,8 @@ import com.xebia.fs101.writerpad.domain.User;
 import com.xebia.fs101.writerpad.exceptions.ArticleNotFoundException;
 import com.xebia.fs101.writerpad.repositories.ArticleRepository;
 import com.xebia.fs101.writerpad.services.helpers.PlagiarismCheckerService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -28,16 +30,17 @@ public class ArticleService {
     @Autowired
     private ArticleRepository articleRepository;
 
-
     @Autowired
     private PlagiarismCheckerService plagiarismCheckerService;
+
+    private static final Logger log = LoggerFactory.getLogger(ArticleService.class);
 
     public Article save(Article article, User user) {
         Stream<String> targetStream =
                 this.articleRepository.findAll().parallelStream().map(Article::getBody);
         CompletableFuture.supplyAsync(() -> targetStream)
                 .exceptionally((exception) -> {
-                    exception.printStackTrace();
+                    log.error("exception occurred in saving article", exception);
                     return Stream.empty();
                 })
                 .thenAcceptAsync(articlesBody ->
@@ -65,7 +68,7 @@ public class ArticleService {
                         .filter(a -> a.getId() != article.getId()).map(Article::getBody);
         CompletableFuture.supplyAsync(() -> targetStream)
                 .exceptionally((exception) -> {
-                    exception.printStackTrace();
+                    log.error("exception occurred in updating article", exception);
                     return Stream.empty();
                 })
                 .thenAcceptAsync(articlesBody ->

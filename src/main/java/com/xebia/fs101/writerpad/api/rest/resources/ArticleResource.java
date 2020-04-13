@@ -16,6 +16,8 @@ import com.xebia.fs101.writerpad.services.security.AdminOnly;
 import com.xebia.fs101.writerpad.services.security.EditorOnly;
 import com.xebia.fs101.writerpad.services.security.WriterOnly;
 import org.hibernate.exception.JDBCConnectionException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -63,12 +65,16 @@ public class ArticleResource {
     @Autowired
     private ImageGenerator imageGenerator;
 
+    private static final Logger log = LoggerFactory.getLogger(ArticleResource.class);
 
     @WriterOnly
     @PostMapping
     public ResponseEntity<ArticleResponse> create(@AuthenticationPrincipal User user,
                                                   @Valid @RequestBody
                                                           ArticleRequest articleRequest) {
+
+        long startTime = System.currentTimeMillis();
+        log.info("Received request: {} to create article from user: {}", articleRequest, user);
         String featuredImageUrl = Objects.isNull(articleRequest.getFeaturedImageUrl())
                 ? imageGenerator.generateRandomImage()
                 : articleRequest.getFeaturedImageUrl();
@@ -77,6 +83,8 @@ public class ArticleResource {
                 this.articleService.save(articleRequest
                                 .toArticle(featuredImageUrl),
                         this.userService.get(user));
+        log.info("Request end time: {} to create article from user: {}"
+                , System.currentTimeMillis() - startTime, user);
         return new ResponseEntity<>(ArticleResponse.from(savedArticle),
                 HttpStatus.CREATED);
 
@@ -119,7 +127,7 @@ public class ArticleResource {
                         , "Publishing an article with Article Id " + toUuid(slugId)))
                 .whenComplete((nil, exception) -> {
                     if (!Objects.isNull(exception)) {
-                        exception.printStackTrace();
+                        log.error("exception occurred in sending email", exception);
                     }
                 })
                 .join();
