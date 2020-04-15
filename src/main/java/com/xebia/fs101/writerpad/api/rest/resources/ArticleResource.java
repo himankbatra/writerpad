@@ -129,8 +129,7 @@ public class ArticleResource {
                     if (!Objects.isNull(exception)) {
                         log.error("exception occurred in sending email", exception);
                     }
-                })
-                .join();
+                });
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
